@@ -5,6 +5,7 @@ import scenePresets from '@/data/scene-presets.json';
 import scriptTemplates from '@/data/script-templates.json';
 import { generateLipSyncVideoWithSync } from '@/lib/cloud';
 import { createOverlayProvider, createPlaceholderVideoBlob } from '@/lib/compositor';
+import { measureImageQuality } from '@/lib/quality';
 import { createDeterministicIdentityId } from '@/lib/identity';
 import { createProjectExportBlob, defaultComposition, defaultVariation, loadFromLocalStorage, saveToLocalStorage } from '@/lib/storage';
 import { detectLanguageFromScript, languageLabels, speechLangCodeMap } from '@/lib/language';
@@ -34,8 +35,8 @@ const initialState: ProjectState = {
   keepIdentityLocked: true,
   scenarioCount: 3,
   voice: { style: 'natural', pauseMs: 220, breathiness: 20, prosodyRate: 1, pitch: 1 },
-  batchCount: 5,
-  clipLengthSec: 20,
+  batchCount: 3,
+  clipLengthSec: 15,
   aspectRatio: '9:16',
   cloud: {
     mode: 'demo',
@@ -116,6 +117,17 @@ const paraphraseTemplates: Record<Language, string[]> = {
 };
 
 const scriptSegmentLabels = ['hook', 'problem', 'solution', 'cta'] as const;
+
+type QuickStartPreset = 'lock_person_swap_product' | 'scene_variation' | 'app_promo_fast' | 'product_promo_trust';
+
+const languageHints: Record<Language, { audience: string; ux: string; note: string }> = {
+  ja: { audience: '日本向け', ux: '結論→体験→やわらかいCTAが自然', note: '断定表現（絶対・100%）は避ける' },
+  en: { audience: 'Global / English', ux: 'Hook in first 2 seconds, then social proof + clear benefit', note: 'Avoid absolute claims like “guaranteed”' },
+  ko: { audience: '한국 사용자', ux: '짧은 공감 훅 + 빠른 데모 + 부담 없는 CTA', note: '과장/기만 표현 금지' },
+  zh: { audience: '中文用户', ux: '真实场景开头 + 简洁卖点 + 温和行动提示', note: '避免夸大与误导性承诺' },
+  fr: { audience: 'Public francophone', ux: 'Ton conversationnel + bénéfice concret + CTA discret', note: 'Pas de promesses absolues' },
+  it: { audience: 'Pubblico italiano', ux: 'Apertura quotidiana + prova pratica + invito naturale', note: 'Evita claim ingannevoli o assoluti' },
+};
 
 function safeParaphrase(source: string, language: Language, index: number): string {
   const lines = source
@@ -267,17 +279,44 @@ export default function Page() {
     patchState('identityLock', { personName, identityId, consentChecked: true, createdAt: new Date().toISOString() });
   };
 
-  const applyQuickPreset = (preset: 'lock_person_swap_product' | 'scene_variation') => {
+  const applyQuickPreset = (preset: QuickStartPreset) => {
     if (preset === 'lock_person_swap_product') {
       patchState('generationMode', 'same_person_product_swap');
       patchState('keepIdentityLocked', true);
+      patchState('batchCount', 3);
       setStatus('プリセット適用: 人物固定 + 商品差し替え');
       return;
     }
+    if (preset === 'scene_variation') {
+      patchState('generationMode', 'same_person_same_product');
+      patchState('keepIdentityLocked', true);
+      patchState('scenarioCount', 5);
+      patchState('scriptVariationMode', 'paraphrase');
+      setStatus('プリセット適用: 同一人物同一商品 + シーン多様化');
+      return;
+    }
+    if (preset === 'app_promo_fast') {
+      patchState('generationMode', 'same_person_same_product');
+      patchState('keepIdentityLocked', true);
+      patchState('scenarioCount', 3);
+      patchState('clipLengthSec', 15);
+      patchState('scriptVariationMode', 'paraphrase');
+      patchState('script', state.language === 'ja'
+        ? '最初の10秒で、どの操作が楽になるかを見せます。\n忙しい日でも迷わず使えるのが助かりました。\nまずは無料で試して、合うかどうか確認してみてください。'
+        : 'Here is the fastest way this app saves time.\nIt removed one daily friction point for me.\nTry the free version first and see if it fits your workflow.');
+      setStatus('クイック開始: アプリ訴求（短尺・自然トーン）');
+      return;
+    }
+
     patchState('generationMode', 'same_person_same_product');
     patchState('keepIdentityLocked', true);
-    patchState('scenarioCount', 5);
-    setStatus('プリセット適用: 同一人物同一商品 + シーン多様化');
+    patchState('scenarioCount', 3);
+    patchState('clipLengthSec', 20);
+    patchState('scriptVariationMode', 'exact');
+    patchState('script', state.language === 'ja'
+      ? '実際に使って感じたポイントを3つだけ紹介します。\n派手な誇張ではなく、日常での使いやすさを中心に伝えます。\n気になった方は商品ページで詳細を確認してください。'
+      : 'I will share three practical impressions after using this product.\nNo hype—just realistic pros and trade-offs.\nCheck the product page if you want full details.');
+    setStatus('クイック開始: プロダクト訴求（信頼重視）');
   };
 
   const buildQueueItems = (append = false) => {
@@ -451,18 +490,40 @@ export default function Page() {
   };
 
   const queueDone = queue.filter((x) => x.status === 'done' || x.status === 'failed');
+  const wizardChecks = [
+    { id: 1, title: '素材を登録', done: Boolean(state.avatar) && (state.productImages?.length ?? 0) > 0 },
+    { id: 2, title: '台本と言語を決める', done: Boolean(state.script.trim()) && Boolean(state.language) },
+    { id: 3, title: 'シーン/本数を調整', done: Boolean(state.aspectRatio) && (state.scenarioCount > 0 || state.batchCount > 0) },
+    { id: 4, title: 'キュー生成して確認', done: queue.length > 0 },
+  ];
+  const currentWizardStep = wizardChecks.find((step) => !step.done)?.id ?? 4;
+  const selectedLanguageHint = languageHints[state.language];
 
   return (
     <main className="mx-auto max-w-[1800px] p-4">
       <div className="sticky top-0 z-20 mb-4 rounded-xl border-2 border-red-400 bg-red-50 p-3 text-sm font-semibold text-red-700">
-        安全通知: このツールの出力はAI生成コンテンツです。本人同意のない人物利用は禁止。なりすまし・誤認を狙う用途は禁止。誇張・虚偽・欺瞞的な主張は避け、各媒体ポリシーと法令に従ってください。
+        安全通知: このツールの出力はAI生成コンテンツです。本人同意のない人物利用は禁止。なりすまし・誤認を狙う用途は禁止。誇張・虚偽・欺瞞的な主張は避け、各媒体ポリシーと法令に従ってください。目標は「自然で誠実な表現」であり、検知回避や不可検知を保証するものではありません。
       </div>
 
       <h1 className="mb-2 text-3xl font-black text-violet-700">UGC動画量産スタジオ</h1>
-      <p className="mb-4 text-sm text-slate-600">{status}</p>
+      <p className="mb-2 text-sm text-slate-600">{status}</p>
+      <p className="mb-4 text-xs text-slate-500">はじめての方へ: まず「素材登録」→「台本」→「キュー生成」の順に進めると迷いません。</p>
+
+      <div className="mb-4 rounded-2xl border border-indigo-200 bg-white p-3">
+        <div className="mb-2 text-sm font-semibold text-indigo-700">かんたん4ステップ（現在: STEP {currentWizardStep}）</div>
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          {wizardChecks.map((step) => (
+            <div key={step.id} className={`wizard-chip ${step.done ? 'wizard-chip-done' : step.id === currentWizardStep ? 'wizard-chip-active' : ''}`}>
+              <span className="text-[11px] font-bold">STEP {step.id}</span>
+              <span className="text-xs">{step.title}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="pop-panel mb-4">
-        <div className="mb-2 font-semibold">生成モード / クラウド設定</div>
+        <div className="mb-1 font-semibold">生成モード / クラウド設定</div>
+        <p className="mb-2 text-xs text-slate-600">安全デフォルト: 初期状態はデモ生成です。実生成時のみクラウドへ切り替えてください。</p>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
           <select className="select" value={state.cloud.mode} onChange={(e) => patchState('cloud', { ...state.cloud, mode: e.target.value as 'demo' | 'cloud' })}>
             <option value="demo">デモ（ローカル疑似生成）</option>
@@ -476,9 +537,9 @@ export default function Page() {
           <label className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold">
             <input type="checkbox" checked={state.keepIdentityLocked} onChange={(e) => patchState('keepIdentityLocked', e.target.checked)} /> 人物IDを固定
           </label>
-          <input className="input" placeholder="ElevenLabs API Key" value={state.cloud.elevenLabsApiKey ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, elevenLabsApiKey: e.target.value })} />
+          <input type="password" className="input" placeholder="ElevenLabs API Key" value={state.cloud.elevenLabsApiKey ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, elevenLabsApiKey: e.target.value })} />
           <input className="input" placeholder="ElevenLabs Voice ID" value={state.cloud.elevenLabsVoiceId ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, elevenLabsVoiceId: e.target.value })} />
-          <input className="input" placeholder="Sync API Token" value={state.cloud.syncApiToken ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, syncApiToken: e.target.value })} />
+          <input type="password" className="input" placeholder="Sync API Token" value={state.cloud.syncApiToken ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, syncApiToken: e.target.value })} />
           <input className="input" placeholder="Sync Model ID (任意)" value={state.cloud.syncModelId ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, syncModelId: e.target.value })} />
         </div>
       </div>
@@ -500,9 +561,14 @@ export default function Page() {
           <input type="file" accept="image/*" multiple className="input" onChange={onUploadSwapAvatars} />
           <div className="rounded-lg bg-slate-50 p-2 text-xs">差し替え人物: {state.avatarSwapImages?.length ?? 0}件</div>
 
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            <button className="btn-secondary" onClick={() => applyQuickPreset('lock_person_swap_product')}>クイック: 人物固定×商品差替</button>
-            <button className="btn-secondary" onClick={() => applyQuickPreset('scene_variation')}>クイック: 同一人物同一商品N本</button>
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs">
+            <div className="mb-2 font-semibold text-emerald-800">クイックスタート（初回ユーザー向け）</div>
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+              <button className="btn-secondary" onClick={() => applyQuickPreset('app_promo_fast')}>アプリ訴求（短尺15秒）</button>
+              <button className="btn-secondary" onClick={() => applyQuickPreset('product_promo_trust')}>商品訴求（信頼重視）</button>
+              <button className="btn-secondary" onClick={() => applyQuickPreset('lock_person_swap_product')}>人物固定×商品差替</button>
+              <button className="btn-secondary" onClick={() => applyQuickPreset('scene_variation')}>同一人物同一商品N本</button>
+            </div>
           </div>
 
           <label className="label">背景画像</label>
@@ -530,6 +596,11 @@ export default function Page() {
           </select>
 
           {languageSuggestion && <div className="rounded-lg bg-slate-50 p-2 text-xs">自動提案: {languageLabels[languageSuggestion.language]} / {Math.round(languageSuggestion.confidence * 100)}%</div>}
+          <div className="rounded-lg border border-sky-200 bg-sky-50 p-2 text-xs">
+            <div className="font-semibold">言語UXヒント: {selectedLanguageHint.audience}</div>
+            <div>構成の目安: {selectedLanguageHint.ux}</div>
+            <div>注意: {selectedLanguageHint.note}</div>
+          </div>
 
           <label className="label">台本テンプレート</label>
           <select className="select" value={state.selectedTemplateId ?? ''} onChange={(e) => { const id = e.target.value; patchState('selectedTemplateId', id); const tpl = templates.find((x) => x.id === id); if (tpl) patchState('script', tpl.body); }}>
@@ -593,7 +664,7 @@ export default function Page() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <button className="btn" onClick={() => buildQueueItems(false)} disabled={running}>生成キュー開始</button>
+            <button className="btn" onClick={() => buildQueueItems(false)} disabled={running}>STEP 4: 生成キュー開始</button>
             <button className="btn-secondary" onClick={() => buildQueueItems(true)}>さらに追加生成</button>
             <button className="btn-secondary" onClick={handleBulkManifestDownload} disabled={queueDone.length === 0}>manifest一括DL</button>
           </div>

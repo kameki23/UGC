@@ -35,3 +35,15 @@ body {
 .btn-secondary {
   @apply rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-50;
 }
+
+.wizard-chip {
+  @apply flex flex-col rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-600;
+}
+
+.wizard-chip-active {
+  @apply border-indigo-300 bg-indigo-50 text-indigo-700;
+}
+
+.wizard-chip-done {
+  @apply border-emerald-300 bg-emerald-50 text-emerald-700;
+}
