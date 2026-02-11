@@ -1,7 +1,7 @@
 import { CompositionSettings, ProjectState, VariationSettings } from './types';
 
-const STORAGE_KEY = 'ugc-video-studio-project-v2';
-const LEGACY_STORAGE_KEY = 'ugc-video-studio-project-v1';
+const STORAGE_KEY = 'ugc-video-studio-project-v3';
+const LEGACY_STORAGE_KEY = 'ugc-video-studio-project-v2';
 
 const defaultComposition: CompositionSettings = {
   personCutout: { enabled: true, x: 0.5, y: 0.62, scale: 1, rotation: 0, opacity: 1 },
@@ -49,8 +49,14 @@ function parseRaw(raw: string): ProjectState | null {
         ...defaultVariation,
         ...(data.variation ?? {}),
       },
+      generationMode: data.generationMode ?? 'same_person_same_product',
+      keepIdentityLocked: data.keepIdentityLocked ?? true,
+      scriptVariationMode: data.scriptVariationMode ?? 'exact',
+      scenarioCount: data.scenarioCount ?? 3,
+      productImages: data.productImages ?? (data.productImage ? [data.productImage] : []),
+      avatarSwapImages: data.avatarSwapImages ?? [],
       handheldProductImage: data.handheldProductImage ?? data.productImage,
-      schemaVersion: schemaVersion >= 2 ? schemaVersion : 2,
+      schemaVersion: schemaVersion >= 3 ? schemaVersion : 3,
     } as ProjectState;
   } catch {
     return null;

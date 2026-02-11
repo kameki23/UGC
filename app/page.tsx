@@ -10,13 +10,29 @@ import { createProjectExportBlob, defaultComposition, defaultVariation, loadFrom
 import { detectLanguageFromScript, languageLabels, speechLangCodeMap } from '@/lib/language';
 import { suggestVoiceStyleFromImage } from '@/lib/style-suggestion';
 import { createElevenLabsAdapter } from '@/lib/tts';
-import { AspectRatio, Language, ProjectState, QueueItem, ScenePreset, ScriptTemplate, UploadedAsset, VariationPreset } from '@/lib/types';
+import {
+  AspectRatio,
+  GenerationMode,
+  GesturePlan,
+  Language,
+  ProjectState,
+  QueueItem,
+  ScenePreset,
+  ScriptTemplate,
+  ScriptVariationMode,
+  UploadedAsset,
+  VariationPreset,
+} from '@/lib/types';
 
 const initialState: ProjectState = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   projectName: '新規UGC案件',
   language: 'ja',
   script: 'ここに台本を編集してください。',
+  scriptVariationMode: 'exact',
+  generationMode: 'same_person_same_product',
+  keepIdentityLocked: true,
+  scenarioCount: 3,
   voice: { style: 'natural', pauseMs: 220, breathiness: 20, prosodyRate: 1, pitch: 1 },
   batchCount: 5,
   clipLengthSec: 20,
@@ -32,21 +48,28 @@ const initialState: ProjectState = {
   },
   composition: defaultComposition,
   variation: defaultVariation,
+  productImages: [],
+  avatarSwapImages: [],
 };
 
 const scenes = scenePresets as ScenePreset[];
 const templates = scriptTemplates as ScriptTemplate[];
-
 const getVideoSize = (aspectRatio: AspectRatio) => (aspectRatio === '16:9' ? { width: 1280, height: 720 } : { width: 1080, height: 1920 });
 
 const normalizeProjectState = (loaded: ProjectState): ProjectState => ({
   ...initialState,
   ...loaded,
-  schemaVersion: 2,
+  schemaVersion: 3,
   cloud: { ...initialState.cloud, ...(loaded.cloud ?? {}) },
   composition: { ...initialState.composition, ...(loaded.composition ?? {}) },
   variation: { ...initialState.variation, ...(loaded.variation ?? {}) },
   handheldProductImage: loaded.handheldProductImage ?? loaded.productImage,
+  productImages: loaded.productImages ?? (loaded.productImage ? [loaded.productImage] : []),
+  avatarSwapImages: loaded.avatarSwapImages ?? [],
+  generationMode: loaded.generationMode ?? 'same_person_same_product',
+  keepIdentityLocked: loaded.keepIdentityLocked ?? true,
+  scriptVariationMode: loaded.scriptVariationMode ?? 'exact',
+  scenarioCount: Math.min(20, Math.max(1, loaded.scenarioCount ?? 3)),
 });
 
 async function fileToAsset(file: File): Promise<UploadedAsset> {
@@ -83,6 +106,58 @@ const variationPresetValues: Record<VariationPreset, Pick<ProjectState['variatio
   explore: { sceneJitter: 0.42, outfitJitter: 0.35, backgroundJitter: 0.38 },
 };
 
+const paraphraseTemplates: Record<Language, string[]> = {
+  ja: ['冒頭は自然な体験談で始める', '誇張表現を避け、実感ベースの語尾にする', 'CTAはやわらかく行動提案にする'],
+  en: ['Open with a relatable hook', 'Use modest, non-deceptive wording', 'Close with a gentle call to action'],
+  ko: ['친근한 일상 훅으로 시작하기', '과장 없이 체감 중심 문장으로 바꾸기', 'CTA는 부담 없는 제안 톤으로 마무리'],
+  zh: ['开头先用真实场景引入', '避免夸张和误导性表达', '结尾用自然邀请式行动提示'],
+  fr: ['Commencer par une accroche du quotidien', 'Garder un ton honnête et sans promesse exagérée', 'Finir avec un CTA doux et crédible'],
+  it: ['Apri con un aggancio realistico', 'Usa frasi naturali senza promesse ingannevoli', 'Chiudi con una call-to-action morbida'],
+};
+
+const scriptSegmentLabels = ['hook', 'problem', 'solution', 'cta'] as const;
+
+function safeParaphrase(source: string, language: Language, index: number): string {
+  const lines = source
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (lines.length === 0) return source;
+  const template = paraphraseTemplates[language] ?? paraphraseTemplates.en;
+  const rotate = index % template.length;
+  const updated = lines.map((line, i) => {
+    if (line.includes('絶対') || line.includes('100%') || line.toLowerCase().includes('guarantee')) {
+      return line.replace(/絶対|100%|guarantee/gi, 'できるだけ');
+    }
+    if (i === 0) return `${line}（${template[rotate]}）`;
+    return line;
+  });
+  return updated.join('\n');
+}
+
+function getGesturePlan(script: string, productType: string, language: Language): GesturePlan {
+  const pieces = script
+    .split(/\n+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const localizedCTA = language === 'ja' ? '最後に優しいCTA' : language === 'ko' ? '부드러운 CTA' : 'soft CTA';
+  const defaults = ['注意を引く導入', '困りごとを共感', '解決の見せ場', localizedCTA];
+  const segments = scriptSegmentLabels.map((seg, i) => ({
+    segment: seg,
+    text: pieces[i] ?? defaults[i],
+    camera: ['寄り', 'バスト', '手元寄り', 'やや引き'][i],
+    gesture: [
+      '片手で軽く指さし + 目線固定',
+      '肩を少しすくめて困り顔',
+      productType.includes('app') ? 'スマホ画面を見せるスワイプ動作' : '商品を前に出して回転見せ',
+      '笑顔でうなずき + 画面下を示す',
+    ][i],
+    expression: ['明るい', '共感', '納得', '安心'][i],
+    tempo: ['fast', 'mid', 'mid', 'slow'][i],
+  }));
+  return { productType, segments };
+}
+
 export default function Page() {
   const [state, setState] = useState<ProjectState>(initialState);
   const [queue, setQueue] = useState<QueueItem[]>([]);
@@ -100,26 +175,16 @@ export default function Page() {
   const selectedScene = scenes.find((s) => s.id === state.selectedSceneId);
   const selectedTemplate = templates.find((t) => t.id === state.selectedTemplateId);
 
-  useEffect(() => {
-    setLanguageSuggestion(detectLanguageFromScript(state.script));
-  }, [state.script]);
+  useEffect(() => setLanguageSuggestion(detectLanguageFromScript(state.script)), [state.script]);
 
   const lipSyncTimeline = useMemo(() => {
     const length = Math.min(state.clipLengthSec, 60);
     const phonemeMap: Record<Language, string[]> = {
-      ja: ['a', 'i', 'u', 'e', 'o'],
-      en: ['ae', 'ih', 'uh', 'eh', 'ow'],
-      ko: ['a', 'eo', 'u', 'i', 'eu'],
-      zh: ['a', 'i', 'u', 'e', 'o'],
-      fr: ['a', 'e', 'i', 'o', 'u'],
-      it: ['a', 'e', 'i', 'o', 'u'],
+      ja: ['a', 'i', 'u', 'e', 'o'], en: ['ae', 'ih', 'uh', 'eh', 'ow'], ko: ['a', 'eo', 'u', 'i', 'eu'],
+      zh: ['a', 'i', 'u', 'e', 'o'], fr: ['a', 'e', 'i', 'o', 'u'], it: ['a', 'e', 'i', 'o', 'u'],
     };
     const phonemes = phonemeMap[state.language] ?? phonemeMap.en;
-    return Array.from({ length: Math.ceil(length / 2) }, (_, i) => ({
-      t: i * 2,
-      mouthOpen: Number((Math.sin(i) * 0.4 + 0.5).toFixed(2)),
-      phoneme: phonemes[i % phonemes.length],
-    }));
+    return Array.from({ length: Math.ceil(length / 2) }, (_, i) => ({ t: i * 2, mouthOpen: Number((Math.sin(i) * 0.4 + 0.5).toFixed(2)), phoneme: phonemes[i % phonemes.length] }));
   }, [state.clipLengthSec, state.language]);
 
   useEffect(() => {
@@ -127,7 +192,6 @@ export default function Page() {
     const canvas = previewCanvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
     const { width, height } = getVideoSize(state.aspectRatio);
     canvas.width = width;
     canvas.height = height;
@@ -135,36 +199,35 @@ export default function Page() {
     let frame = 0;
     const id = setInterval(() => {
       frame += 1;
-      ctx.fillStyle = '#0f172a';
+      const grd = ctx.createLinearGradient(0, 0, width, height);
+      grd.addColorStop(0, '#1e1b4b');
+      grd.addColorStop(1, '#0f172a');
+      ctx.fillStyle = grd;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      if (state.backgroundImage) {
-        const bg = new Image();
-        bg.src = state.backgroundImage.dataUrl;
-        ctx.globalAlpha = 0.9;
-        ctx.drawImage(bg, 0, 0, width, height);
-      }
-
-      const cardX = Math.round(width * 0.07) + (frame % Math.max(140, Math.round(width * 0.22)));
+      const cardX = Math.round(width * 0.08) + (frame % Math.max(120, Math.round(width * 0.18)));
       const cardY = Math.round(height * 0.16);
-      const cardW = Math.round(width * 0.22);
+      const cardW = Math.round(width * 0.24);
       const cardH = Math.round(height * 0.28);
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = '#38bdf8';
+      ctx.globalAlpha = 0.95;
+      ctx.fillStyle = '#f472b6';
       ctx.fillRect(cardX, cardY, cardW, cardH);
+      ctx.fillStyle = '#22d3ee';
+      ctx.fillRect(cardX + 24, cardY + 24, Math.round(cardW * 0.5), Math.round(cardH * 0.38));
 
+      ctx.globalAlpha = 1;
       ctx.fillStyle = '#f8fafc';
       ctx.font = `${Math.max(18, Math.round(width * 0.018))}px sans-serif`;
       ctx.fillText(state.projectName, Math.round(width * 0.05), Math.round(height * 0.06));
       ctx.font = `${Math.max(16, Math.round(width * 0.014))}px sans-serif`;
       ctx.fillText(selectedScene?.name ?? 'シーン未選択', Math.round(width * 0.05), Math.round(height * 0.76));
-      ctx.fillText(`言語: ${state.language}`, Math.round(width * 0.05), Math.round(height * 0.82));
+      ctx.fillText(`モード: ${state.generationMode}`, Math.round(width * 0.05), Math.round(height * 0.82));
       ctx.fillText(`秒数: ${Math.min(state.clipLengthSec, 60)}秒`, Math.round(width * 0.05), Math.round(height * 0.88));
       ctx.fillText(`比率: ${state.aspectRatio}`, Math.round(width * 0.05), Math.round(height * 0.94));
     }, 160);
 
     return () => clearInterval(id);
-  }, [state.projectName, state.language, state.clipLengthSec, state.aspectRatio, selectedScene?.name, state.backgroundImage]);
+  }, [state.projectName, state.clipLengthSec, state.aspectRatio, state.generationMode, selectedScene?.name]);
 
   function patchState<K extends keyof ProjectState>(key: K, value: ProjectState[K]) {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -178,11 +241,22 @@ export default function Page() {
     if (!file) return;
     const asset = await fileToAsset(file);
     patchState(key, asset);
+    if (key === 'avatar') setVoiceStyleSuggestion(await suggestVoiceStyleFromImage(asset.dataUrl));
+  };
 
-    if (key === 'avatar') {
-      const suggested = await suggestVoiceStyleFromImage(asset.dataUrl);
-      setVoiceStyleSuggestion(suggested);
-    }
+  const onUploadMultiProducts = async (evt: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(evt.target.files ?? []);
+    if (!files.length) return;
+    const assets = await Promise.all(files.map(fileToAsset));
+    patchState('productImages', assets);
+    patchState('handheldProductImage', assets[0]);
+    setStatus(`商品リストを${assets.length}件読み込みました`);
+  };
+
+  const onUploadSwapAvatars = async (evt: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(evt.target.files ?? []);
+    if (!files.length) return;
+    patchState('avatarSwapImages', await Promise.all(files.map(fileToAsset)));
   };
 
   const createIdentityLock = async () => {
@@ -190,42 +264,68 @@ export default function Page() {
     const personName = prompt('人物名を入力してください（同意済みの本人のみ）') ?? '';
     if (!personName) return;
     const identityId = await createDeterministicIdentityId(personName, state.avatar.dataUrl);
-    patchState('identityLock', {
-      personName,
-      identityId,
-      consentChecked: true,
-      createdAt: new Date().toISOString(),
-    });
+    patchState('identityLock', { personName, identityId, consentChecked: true, createdAt: new Date().toISOString() });
+  };
+
+  const applyQuickPreset = (preset: 'lock_person_swap_product' | 'scene_variation') => {
+    if (preset === 'lock_person_swap_product') {
+      patchState('generationMode', 'same_person_product_swap');
+      patchState('keepIdentityLocked', true);
+      setStatus('プリセット適用: 人物固定 + 商品差し替え');
+      return;
+    }
+    patchState('generationMode', 'same_person_same_product');
+    patchState('keepIdentityLocked', true);
+    patchState('scenarioCount', 5);
+    setStatus('プリセット適用: 同一人物同一商品 + シーン多様化');
   };
 
   const buildQueueItems = (append = false) => {
-    const count = Math.min(20, Math.max(1, state.batchCount));
+    const plannedCount = state.generationMode === 'same_person_same_product' ? state.scenarioCount : Math.min(20, Math.max(1, state.batchCount));
     const existing = append ? queue.length : 0;
-    const items: QueueItem[] = Array.from({ length: count }, (_, i) => {
+    const baseProductList = state.productImages && state.productImages.length > 0 ? state.productImages : state.handheldProductImage ? [state.handheldProductImage] : [];
+    const productLoop = baseProductList.length > 0 ? baseProductList : [undefined];
+
+    const items: QueueItem[] = Array.from({ length: Math.min(60, Math.max(1, plannedCount)) }, (_, i) => {
       const idx = existing + i + 1;
-      const id = crypto.randomUUID();
-      const { width, height } = getVideoSize(state.aspectRatio);
       const itemSeed = state.variation.seed + idx * 17;
-      const ffmpegCommand = `ffmpeg -loop 1 -i composed_${idx}.png -i voice_${idx}.mp3 -t ${Math.min(state.clipLengthSec, 60)} -vf "scale=${width}:${height}" -c:v libx264 output_${idx}.mp4`;
+      const selectedProduct = state.generationMode === 'same_person_product_swap' ? productLoop[i % productLoop.length] : productLoop[0];
+      const swapPool = state.avatarSwapImages ?? [];
+      const swapAvatars = state.generationMode === 'person_swap_optional' ? [state.avatar, ...swapPool].filter(Boolean) as UploadedAsset[] : [];
+      const selectedAvatar = state.keepIdentityLocked ? state.avatar : swapAvatars.length ? swapAvatars[i % swapAvatars.length] : state.avatar;
+      const productType = selectedProduct?.name?.toLowerCase().includes('app') ? 'app' : 'product';
+      const scriptText = state.scriptVariationMode === 'exact' ? state.script : safeParaphrase(state.script, state.language, i);
+      const gesturePlan = getGesturePlan(scriptText, productType, state.language);
+      const { width, height } = getVideoSize(state.aspectRatio);
+
       const recipe = {
         index: idx,
         seed: itemSeed,
+        generationMode: state.generationMode,
+        keepIdentityLocked: state.keepIdentityLocked,
+        scenarioIndex: i + 1,
         language: state.language,
         sceneId: state.selectedSceneId,
         templateId: state.selectedTemplateId,
         voice: state.voice,
+        script: scriptText,
+        scriptVariationMode: state.scriptVariationMode,
         aspectRatio: state.aspectRatio,
         variation: state.variation,
         composition: state.composition,
+        productName: selectedProduct?.name ?? state.productImage?.name ?? 'default-product',
+        avatarName: selectedAvatar?.name ?? state.avatar?.name ?? 'default-avatar',
+        gesturePlan,
         resolution: `${width}x${height}`,
         lipSyncTimeline,
       };
+
       return {
-        id,
+        id: crypto.randomUUID(),
         index: idx,
         status: 'queued',
         progress: 0,
-        ffmpegCommand,
+        ffmpegCommand: `ffmpeg -loop 1 -i composed_${idx}.png -i voice_${idx}.mp3 -t ${Math.min(state.clipLengthSec, 60)} -vf "scale=${width}:${height}" -c:v libx264 output_${idx}.mp4`,
         recipe,
         seed: itemSeed,
         downloadName: `ugc_${state.aspectRatio.replace(':', 'x')}_${idx}.webm`,
@@ -233,13 +333,12 @@ export default function Page() {
     });
 
     setQueue((prev) => (append ? [...prev, ...items] : items));
-    setStatus(append ? `追加キュー ${count} 本を連結しました` : '生成キューを開始しました');
+    setStatus(`${items.length}本のキューを作成しました（${state.generationMode}）`);
   };
 
   const ensureArtifact = async (item: QueueItem) => {
     if (item.videoUrl) return { kind: 'url' as const, value: item.videoUrl };
     if (item.artifactUrl) return { kind: 'blob' as const, value: item.artifactUrl };
-
     const source = item.composedImageUrl ?? state.avatar?.dataUrl;
     if (!source) throw new Error('ダウンロード元アセットがありません');
     const { blob, mimeType } = await createPlaceholderVideoBlob(source, state.clipLengthSec);
@@ -248,48 +347,44 @@ export default function Page() {
     return { kind: 'blob' as const, value: artifactUrl };
   };
 
+  const handleBulkManifestDownload = () => {
+    const done = queue.filter((q) => q.status === 'done' || q.status === 'failed');
+    const manifest = {
+      projectName: state.projectName,
+      generatedAt: new Date().toISOString(),
+      count: done.length,
+      items: done.map((item) => ({ index: item.index, status: item.status, downloadName: item.downloadName, seed: item.seed, recipe: item.recipe })),
+    };
+    downloadBlob(new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' }), `${state.projectName}_bulk_manifest.json`);
+  };
+
   const runCloudGeneration = async () => {
-    if (!state.avatar) {
-      setStatus('クラウド生成には人物画像が必要です');
-      return;
-    }
+    if (!state.avatar) return setStatus('クラウド生成には人物画像が必要です');
     if (!state.cloud.elevenLabsApiKey || !state.cloud.elevenLabsVoiceId || !state.cloud.syncApiToken) {
-      setStatus('クラウド生成にはElevenLabs API Key/Voice ID と Sync API Tokenが必要です');
-      return;
+      return setStatus('クラウド生成にはElevenLabs API Key/Voice ID と Sync API Tokenが必要です');
     }
 
     setRunning(true);
     try {
       for (const item of queue) {
         if (item.status !== 'queued') continue;
-
         setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, status: 'rendering', progress: 8 } : q)));
-
         const { width, height } = getVideoSize(state.aspectRatio);
         const overlayProvider = createOverlayProvider(state);
         const overlay = await overlayProvider.synthesize({ state, seed: item.seed, width, height });
-
         setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, composedImageUrl: overlay.composedDataUrl, progress: 28 } : q)));
 
         const tts = createElevenLabsAdapter(state.cloud.elevenLabsApiKey, state.cloud.elevenLabsVoiceId);
         if (!tts.synthesize) throw new Error('TTS adapter synthesize未対応');
-
-        const audioBlob = await tts.synthesize(state.script.slice(0, 1200), state.voice, state.language);
+        const script = String((item.recipe as Record<string, unknown>).script ?? state.script);
+        const audioBlob = await tts.synthesize(script.slice(0, 1200), state.voice, state.language);
         const audioUrl = URL.createObjectURL(audioBlob);
         setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, progress: 56, audioUrl } : q)));
 
-        const videoUrl = await generateLipSyncVideoWithSync(
-          state.cloud.syncApiToken,
-          overlay.composedDataUrl,
-          audioBlob,
-          state.language,
-          state.aspectRatio,
-          state.cloud.syncModelId || 'lipsync-2',
-        );
-
+        const videoUrl = await generateLipSyncVideoWithSync(state.cloud.syncApiToken, overlay.composedDataUrl, audioBlob, state.language, state.aspectRatio, state.cloud.syncModelId || 'lipsync-2');
         setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, status: 'done', progress: 100, videoUrl } : q)));
       }
-      setStatus('クラウド生成が完了しました。未返却時はローカルplaceholderを生成して保存できます。');
+      setStatus('クラウド生成が完了しました。');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       setQueue((prev) => {
@@ -309,7 +404,6 @@ export default function Page() {
 
   useEffect(() => {
     if (queue.length === 0 || running || state.cloud.mode === 'cloud') return;
-
     setRunning(true);
     const timer = setInterval(async () => {
       const current = queue.find((x) => x.status === 'queued' || x.status === 'rendering');
@@ -319,30 +413,21 @@ export default function Page() {
         clearInterval(timer);
         return;
       }
-
       if (current.status === 'queued') {
         setQueue((prev) => prev.map((x) => (x.id === current.id ? { ...x, status: 'rendering', progress: 12 } : x)));
       } else {
         const nextProgress = Math.min(90, current.progress + 20);
         setQueue((prev) => prev.map((x) => (x.id === current.id ? { ...x, progress: nextProgress } : x)));
       }
-
-      const currentFresh = queue.find((x) => x.id === current.id) ?? current;
-      if (currentFresh.progress >= 72) {
+      const fresh = queue.find((x) => x.id === current.id) ?? current;
+      if (fresh.progress >= 72) {
         const { width, height } = getVideoSize(state.aspectRatio);
         const overlay = await createOverlayProvider(state).synthesize({ state, seed: current.seed, width, height });
         const artifact = await createPlaceholderVideoBlob(overlay.composedDataUrl, state.clipLengthSec);
         const artifactUrl = URL.createObjectURL(artifact.blob);
-        setQueue((prev) =>
-          prev.map((x) =>
-            x.id === current.id
-              ? { ...x, status: 'done', progress: 100, composedImageUrl: overlay.composedDataUrl, artifactUrl, artifactMime: artifact.mimeType }
-              : x,
-          ),
-        );
+        setQueue((prev) => prev.map((x) => (x.id === current.id ? { ...x, status: 'done', progress: 100, composedImageUrl: overlay.composedDataUrl, artifactUrl, artifactMime: artifact.mimeType } : x)));
       }
     }, 650);
-
     return () => clearInterval(timer);
   }, [queue, running, state, state.cloud.mode, state.aspectRatio, state.clipLengthSec]);
 
@@ -353,259 +438,176 @@ export default function Page() {
   }, [queue, state.cloud.mode]);
 
   const handleProjectExport = () => downloadBlob(createProjectExportBlob(state), `${state.projectName}.json`);
-
   const handleProjectImport = async (evt: ChangeEvent<HTMLInputElement>) => {
     const file = evt.target.files?.[0];
     if (!file) return;
-    const text = await file.text();
-    setState(normalizeProjectState(JSON.parse(text) as ProjectState));
+    setState(normalizeProjectState(JSON.parse(await file.text()) as ProjectState));
   };
-
-  const downloadQueueRecipe = (item: QueueItem) => {
-    downloadBlob(new Blob([JSON.stringify(item.recipe, null, 2)], { type: 'application/json' }), `recipe_${item.index}.json`);
-  };
-
+  const downloadQueueRecipe = (item: QueueItem) => downloadBlob(new Blob([JSON.stringify(item.recipe, null, 2)], { type: 'application/json' }), `recipe_${item.index}.json`);
   const speakPreview = async () => {
     const tts = createElevenLabsAdapter(state.cloud.elevenLabsApiKey, state.cloud.elevenLabsVoiceId);
     await tts.speak(state.script.slice(0, 120), state.voice, state.language);
     setStatus(`音声プレビュー再生: ${tts.name}`);
   };
 
-  const saveLocal = () => {
-    saveToLocalStorage(state);
-    setStatus('ローカル保存しました');
-  };
+  const queueDone = queue.filter((x) => x.status === 'done' || x.status === 'failed');
 
   return (
     <main className="mx-auto max-w-[1800px] p-4">
       <div className="sticky top-0 z-20 mb-4 rounded-xl border-2 border-red-400 bg-red-50 p-3 text-sm font-semibold text-red-700">
-        安全通知: このツールの出力はAI生成コンテンツです。本人同意のない人物利用は禁止。なりすまし・誤認を狙う用途は禁止。商用では「高い自然さ」を目指しますが、欺瞞的な表現や誤解誘導は行わず、各媒体ポリシーと法令に従ってください。
+        安全通知: このツールの出力はAI生成コンテンツです。本人同意のない人物利用は禁止。なりすまし・誤認を狙う用途は禁止。誇張・虚偽・欺瞞的な主張は避け、各媒体ポリシーと法令に従ってください。
       </div>
 
-      <h1 className="mb-4 text-2xl font-bold">UGC動画量産スタジオ</h1>
+      <h1 className="mb-2 text-3xl font-black text-violet-700">UGC動画量産スタジオ</h1>
       <p className="mb-4 text-sm text-slate-600">{status}</p>
 
-      <div className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm">
+      <div className="pop-panel mb-4">
         <div className="mb-2 font-semibold">生成モード / クラウド設定</div>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
           <select className="select" value={state.cloud.mode} onChange={(e) => patchState('cloud', { ...state.cloud, mode: e.target.value as 'demo' | 'cloud' })}>
             <option value="demo">デモ（ローカル疑似生成）</option>
             <option value="cloud">クラウド（実生成）</option>
           </select>
+          <select className="select" value={state.generationMode} onChange={(e) => patchState('generationMode', e.target.value as GenerationMode)}>
+            <option value="same_person_same_product">同一人物 + 同一商品（シーン変化）</option>
+            <option value="same_person_product_swap">同一人物 + 商品差し替えリスト</option>
+            <option value="person_swap_optional">人物差し替え（任意）</option>
+          </select>
+          <label className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold">
+            <input type="checkbox" checked={state.keepIdentityLocked} onChange={(e) => patchState('keepIdentityLocked', e.target.checked)} /> 人物IDを固定
+          </label>
           <input className="input" placeholder="ElevenLabs API Key" value={state.cloud.elevenLabsApiKey ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, elevenLabsApiKey: e.target.value })} />
           <input className="input" placeholder="ElevenLabs Voice ID" value={state.cloud.elevenLabsVoiceId ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, elevenLabsVoiceId: e.target.value })} />
           <input className="input" placeholder="Sync API Token" value={state.cloud.syncApiToken ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, syncApiToken: e.target.value })} />
           <input className="input" placeholder="Sync Model ID (任意)" value={state.cloud.syncModelId ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, syncModelId: e.target.value })} />
-          <select className="select" value={state.cloud.overlayProvider ?? 'auto'} onChange={(e) => patchState('cloud', { ...state.cloud, overlayProvider: e.target.value as 'auto' | 'cloud' | 'browser' })}>
-            <option value="auto">オーバーレイ合成: 自動</option>
-            <option value="cloud">オーバーレイ合成: クラウド優先</option>
-            <option value="browser">オーバーレイ合成: ブラウザCanvas</option>
-          </select>
-          <input className="input" placeholder="Overlay Provider API Key (任意)" value={state.cloud.overlayApiKey ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, overlayApiKey: e.target.value })} />
         </div>
-        <p className="mt-2 text-xs text-slate-600">※ APIキーはブラウザ内保存です。公開URLで使う場合は漏洩に注意してください（使い捨てキー推奨）。</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <section className="panel space-y-3">
-          <h2 className="text-lg font-bold">左: 素材管理</h2>
+          <h2 className="text-lg font-bold text-pink-600">左: 素材管理</h2>
           <label className="label">プロジェクト名</label>
           <input className="input" value={state.projectName} onChange={(e) => patchState('projectName', e.target.value)} />
-
           <label className="label">人物/アバター画像</label>
           <input type="file" accept="image/*" className="input" onChange={(e) => onUpload(e, 'avatar')} />
-          {state.avatar && <img src={state.avatar.dataUrl} alt="avatar" className="h-28 w-28 rounded-lg object-cover" />}
           <button className="btn-secondary" onClick={createIdentityLock} disabled={!state.avatar}>IDロック作成（同意必須）</button>
-          {voiceStyleSuggestion && (
-            <div className="rounded-lg bg-slate-50 p-2 text-xs">
-              <div className="font-semibold">画像トーンから音声スタイル提案（属性推定なし）</div>
-              <div>提案: {voiceStyleSuggestion.style} / {voiceStyleSuggestion.reason}</div>
-              <div className="text-slate-500">brightness:{voiceStyleSuggestion.metrics.brightness} saturation:{voiceStyleSuggestion.metrics.saturation} warm:{voiceStyleSuggestion.metrics.warmRatio}</div>
-              <button className="btn-secondary mt-2" onClick={() => patchState('voice', { ...state.voice, style: voiceStyleSuggestion.style })}>提案スタイルを適用</button>
-            </div>
-          )}
+
+          <label className="label">商品画像リスト（複数アップロード）</label>
+          <input type="file" accept="image/*" multiple className="input" onChange={onUploadMultiProducts} />
+          <div className="rounded-lg bg-slate-50 p-2 text-xs">登録商品: {state.productImages?.length ?? 0}件</div>
+
+          <label className="label">人物差し替え候補（任意 / 複数）</label>
+          <input type="file" accept="image/*" multiple className="input" onChange={onUploadSwapAvatars} />
+          <div className="rounded-lg bg-slate-50 p-2 text-xs">差し替え人物: {state.avatarSwapImages?.length ?? 0}件</div>
+
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <button className="btn-secondary" onClick={() => applyQuickPreset('lock_person_swap_product')}>クイック: 人物固定×商品差替</button>
+            <button className="btn-secondary" onClick={() => applyQuickPreset('scene_variation')}>クイック: 同一人物同一商品N本</button>
+          </div>
 
           <label className="label">背景画像</label>
           <input type="file" accept="image/*" className="input" onChange={(e) => onUpload(e, 'backgroundImage')} />
-          <label className="label">手持ち商品画像（手で持つ商品）</label>
+          <label className="label">手持ち商品画像（単体）</label>
           <input type="file" accept="image/*" className="input" onChange={(e) => onUpload(e, 'handheldProductImage')} />
           <label className="label">スマホ画面画像</label>
           <input type="file" accept="image/*" className="input" onChange={(e) => onUpload(e, 'smartphoneScreenImage')} />
-          <label className="label">商品画像（互換）</label>
-          <input type="file" accept="image/*" className="input" onChange={(e) => onUpload(e, 'productImage')} />
-          <label className="label">衣装リファレンス</label>
-          <input type="file" accept="image/*" className="input" onChange={(e) => onUpload(e, 'outfitRef')} />
-          <label className="label">任意: 商品/スマホ保持ポーズ参考画像</label>
-          <input type="file" accept="image/*" className="input" onChange={(e) => onUpload(e, 'holdReferenceImage')} />
 
-          <div className="rounded-lg bg-slate-50 p-2 text-xs">
-            <div className="mb-1 font-semibold">コンポジション設定（%）</div>
-            <div className="grid grid-cols-2 gap-2">
-              <input className="input" type="number" step="1" value={Math.round(state.composition.handheldProduct.x * 100)} onChange={(e) => patchState('composition', { ...state.composition, handheldProduct: { ...state.composition.handheldProduct, x: Number(e.target.value) / 100 } })} placeholder="商品X" />
-              <input className="input" type="number" step="1" value={Math.round(state.composition.handheldProduct.y * 100)} onChange={(e) => patchState('composition', { ...state.composition, handheldProduct: { ...state.composition.handheldProduct, y: Number(e.target.value) / 100 } })} placeholder="商品Y" />
-              <input className="input" type="number" step="1" value={Math.round(state.composition.smartphoneScreen.x * 100)} onChange={(e) => patchState('composition', { ...state.composition, smartphoneScreen: { ...state.composition.smartphoneScreen, x: Number(e.target.value) / 100 } })} placeholder="スマホX" />
-              <input className="input" type="number" step="1" value={Math.round(state.composition.smartphoneScreen.y * 100)} onChange={(e) => patchState('composition', { ...state.composition, smartphoneScreen: { ...state.composition.smartphoneScreen, y: Number(e.target.value) / 100 } })} placeholder="スマホY" />
-            </div>
-          </div>
+          {voiceStyleSuggestion && <div className="rounded-lg bg-slate-50 p-2 text-xs">画像トーン提案: {voiceStyleSuggestion.style} / {voiceStyleSuggestion.reason}</div>}
 
           <div className="flex flex-wrap gap-2 pt-2">
-            <button className="btn" onClick={saveLocal}>ローカル保存</button>
-            <button
-              className="btn-secondary"
-              onClick={() => {
-                const loaded = loadFromLocalStorage();
-                setState(loaded ? normalizeProjectState(loaded) : initialState);
-              }}
-            >
-              ローカル読込
-            </button>
+            <button className="btn" onClick={() => { saveToLocalStorage(state); setStatus('ローカル保存しました'); }}>ローカル保存</button>
+            <button className="btn-secondary" onClick={() => setState(normalizeProjectState(loadFromLocalStorage() ?? initialState))}>ローカル読込</button>
             <button className="btn-secondary" onClick={handleProjectExport}>JSON書き出し</button>
-            <label className="btn-secondary cursor-pointer">
-              JSON読み込み<input type="file" accept="application/json" className="hidden" onChange={handleProjectImport} />
-            </label>
+            <label className="btn-secondary cursor-pointer">JSON読み込み<input type="file" accept="application/json" className="hidden" onChange={handleProjectImport} /></label>
           </div>
         </section>
 
         <section className="panel space-y-3">
-          <h2 className="text-lg font-bold">中央: 台本・言語・音声</h2>
+          <h2 className="text-lg font-bold text-cyan-600">中央: 台本・言語・ジェスチャー</h2>
           <label className="label">言語</label>
           <select className="select" value={state.language} onChange={(e) => patchState('language', e.target.value as Language)}>
-            <option value="ja">日本語 (ja)</option>
-            <option value="en">English (en)</option>
-            <option value="ko">한국어 (ko)</option>
-            <option value="zh">中文 (zh)</option>
-            <option value="fr">Français (fr)</option>
-            <option value="it">Italiano (it)</option>
+            <option value="ja">日本語</option><option value="en">English</option><option value="ko">한국어</option><option value="zh">中文</option><option value="fr">Français</option><option value="it">Italiano</option>
           </select>
-          {languageSuggestion && (
-            <div className="rounded-lg bg-slate-50 p-2 text-xs">
-              <div>自動提案: {languageLabels[languageSuggestion.language]} ({languageSuggestion.language}) / 信頼度 {Math.round(languageSuggestion.confidence * 100)}%</div>
-              <div className="text-slate-500">根拠: {languageSuggestion.reason}</div>
-              <button className="btn-secondary mt-2" onClick={() => patchState('language', languageSuggestion.language)}>提案言語を適用</button>
-            </div>
-          )}
 
-          <label className="label">台本テンプレート (50件)</label>
-          <select
-            className="select"
-            value={state.selectedTemplateId ?? ''}
-            onChange={(e) => {
-              const id = e.target.value;
-              patchState('selectedTemplateId', id);
-              const tpl = templates.find((x) => x.id === id);
-              if (tpl) patchState('script', tpl.body);
-            }}
-          >
-            <option value="">選択してください</option>
-            {templates.map((tpl) => (
-              <option key={tpl.id} value={tpl.id}>
-                {tpl.title} / {tpl.style}
-              </option>
-            ))}
+          {languageSuggestion && <div className="rounded-lg bg-slate-50 p-2 text-xs">自動提案: {languageLabels[languageSuggestion.language]} / {Math.round(languageSuggestion.confidence * 100)}%</div>}
+
+          <label className="label">台本テンプレート</label>
+          <select className="select" value={state.selectedTemplateId ?? ''} onChange={(e) => { const id = e.target.value; patchState('selectedTemplateId', id); const tpl = templates.find((x) => x.id === id); if (tpl) patchState('script', tpl.body); }}>
+            <option value="">選択してください</option>{templates.map((tpl) => <option key={tpl.id} value={tpl.id}>{tpl.title} / {tpl.style}</option>)}
           </select>
+
+          <label className="label">台本バリエーション</label>
+          <select className="select" value={state.scriptVariationMode} onChange={(e) => patchState('scriptVariationMode', e.target.value as ScriptVariationMode)}>
+            <option value="exact">exact（そのまま使用）</option>
+            <option value="paraphrase">paraphrase（軽い自然リライト）</option>
+          </select>
+          <div className="rounded-lg bg-amber-50 p-2 text-xs">paraphrase補助テンプレート: {(paraphraseTemplates[state.language] ?? []).join(' / ')}</div>
 
           <label className="label">台本</label>
           <textarea className="textarea min-h-52" value={state.script} onChange={(e) => patchState('script', e.target.value)} />
-          {selectedTemplate && <p className="text-xs text-slate-500">プレースホルダ: {selectedTemplate.placeholders.join(', ')}</p>}
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="label">音声スタイル</label>
-              <select className="select" value={state.voice.style} onChange={(e) => patchState('voice', { ...state.voice, style: e.target.value as ProjectState['voice']['style'] })}>
-                <option value="natural">Natural</option>
-                <option value="energetic">Energetic</option>
-                <option value="calm">Calm</option>
-                <option value="luxury">Luxury</option>
-              </select>
+          <button className="btn-secondary" onClick={() => patchState('gesturePlan', getGesturePlan(state.script, (state.productImages?.[0]?.name ?? '').toLowerCase().includes('app') ? 'app' : 'product', state.language))}>
+            ジェスチャープランを生成（hook/problem/solution/cta）
+          </button>
+          {state.gesturePlan && (
+            <div className="rounded-lg bg-slate-900 p-2 text-xs text-emerald-300">
+              {state.gesturePlan.segments.map((seg) => (
+                <div key={seg.segment} className="mb-2 rounded bg-slate-800 p-2">
+                  <div className="font-semibold">{seg.segment}</div>
+                  <div>camera: {seg.camera} / gesture: {seg.gesture}</div>
+                  <div>expression: {seg.expression} / tempo: {seg.tempo}</div>
+                </div>
+              ))}
             </div>
-            <div>
-              <label className="label">Pause(ms)</label>
-              <input type="number" className="input" value={state.voice.pauseMs} onChange={(e) => patchState('voice', { ...state.voice, pauseMs: Number(e.target.value) })} />
-            </div>
-          </div>
-          <button className="btn" onClick={speakPreview}>音声プレビュー（ElevenLabs優先）</button>
-          <p className="text-xs text-slate-500">TTS言語コード: {speechLangCodeMap[state.language]}（ElevenLabs未設定時はブラウザ音声にフォールバック）</p>
+          )}
+
+          <button className="btn" onClick={speakPreview}>音声プレビュー</button>
+          <p className="text-xs text-slate-500">TTS言語コード: {speechLangCodeMap[state.language]}</p>
         </section>
 
         <section className="panel space-y-3">
-          <h2 className="text-lg font-bold">右: シーン・バリエーション・生成</h2>
-          <label className="label">シーンプリセット (100件)</label>
+          <h2 className="text-lg font-bold text-violet-600">右: シーン・生成キュー</h2>
+          <label className="label">シーンプリセット</label>
           <select className="select" value={state.selectedSceneId ?? ''} onChange={(e) => patchState('selectedSceneId', e.target.value)}>
-            <option value="">選択してください</option>
-            {scenes.map((scene) => (
-              <option key={scene.id} value={scene.id}>
-                {scene.name} / {scene.lighting} / {scene.cameraMove}
-              </option>
-            ))}
+            <option value="">選択してください</option>{scenes.map((scene) => <option key={scene.id} value={scene.id}>{scene.name} / {scene.cameraMove}</option>)}
           </select>
 
-          {selectedScene && <div className="rounded-lg bg-slate-50 p-2 text-xs text-slate-600">場所: {selectedScene.location} / 雰囲気: {selectedScene.mood}</div>}
-
           <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-            <div>
-              <label className="label">画角比率</label>
-              <select className="select" value={state.aspectRatio} onChange={(e) => patchState('aspectRatio', e.target.value as AspectRatio)}>
-                <option value="9:16">9:16（縦動画）</option>
-                <option value="16:9">16:9（横動画）</option>
-              </select>
-            </div>
-            <div>
-              <label className="label">バッチ本数 (1-20)</label>
-              <input type="number" min={1} max={20} className="input" value={state.batchCount} onChange={(e) => patchState('batchCount', Number(e.target.value))} />
-            </div>
-            <div>
-              <label className="label">1本の長さ (&lt;=60秒)</label>
-              <input type="number" min={5} max={60} className="input" value={state.clipLengthSec} onChange={(e) => patchState('clipLengthSec', Number(e.target.value))} />
-            </div>
+            <div><label className="label">画角比率</label><select className="select" value={state.aspectRatio} onChange={(e) => patchState('aspectRatio', e.target.value as AspectRatio)}><option value="9:16">9:16</option><option value="16:9">16:9</option></select></div>
+            <div><label className="label">バッチ本数</label><input type="number" min={1} max={20} className="input" value={state.batchCount} onChange={(e) => patchState('batchCount', Number(e.target.value))} /></div>
+            <div><label className="label">1本の長さ</label><input type="number" min={5} max={60} className="input" value={state.clipLengthSec} onChange={(e) => patchState('clipLengthSec', Number(e.target.value))} /></div>
           </div>
 
+          <label className="label">シナリオ本数（同一人物+同一商品モード用）</label>
+          <input type="number" min={1} max={20} className="input" value={state.scenarioCount} onChange={(e) => patchState('scenarioCount', Math.min(20, Math.max(1, Number(e.target.value))))} />
+
           <div className="rounded-lg bg-indigo-50 p-2 text-xs">
-            <div className="mb-1 font-semibold">同一人物マルチバリエーション</div>
+            <div className="font-semibold">同一人物マルチバリエーション</div>
             <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-              <select
-                className="select"
-                value={state.variation.preset}
-                onChange={(e) => {
-                  const preset = e.target.value as VariationPreset;
-                  patchState('variation', { ...state.variation, preset, ...variationPresetValues[preset] });
-                }}
-              >
-                <option value="stable">安定（変化小）</option>
-                <option value="balanced">標準</option>
-                <option value="explore">探索（変化大）</option>
+              <select className="select" value={state.variation.preset} onChange={(e) => { const preset = e.target.value as VariationPreset; patchState('variation', { ...state.variation, preset, ...variationPresetValues[preset] }); }}>
+                <option value="stable">安定</option><option value="balanced">標準</option><option value="explore">探索</option>
               </select>
-              <input className="input" type="number" value={state.variation.seed} onChange={(e) => patchState('variation', { ...state.variation, seed: Number(e.target.value) })} placeholder="シード" />
+              <input className="input" type="number" value={state.variation.seed} onChange={(e) => patchState('variation', { ...state.variation, seed: Number(e.target.value) })} />
               <button className="btn-secondary" onClick={() => patchState('variation', { ...state.variation, seed: Math.floor(Math.random() * 1_000_000_000) })}>シード再生成</button>
             </div>
-            <p className="mt-1 text-[11px] text-slate-600">人物IDは固定、衣装/背景/シーンだけをseedで変化させます。</p>
           </div>
 
           <div className="flex flex-wrap gap-2">
             <button className="btn" onClick={() => buildQueueItems(false)} disabled={running}>生成キュー開始</button>
-            <button className="btn-secondary" onClick={() => buildQueueItems(true)}>さらに追加生成（Append More）</button>
+            <button className="btn-secondary" onClick={() => buildQueueItems(true)}>さらに追加生成</button>
+            <button className="btn-secondary" onClick={handleBulkManifestDownload} disabled={queueDone.length === 0}>manifest一括DL</button>
           </div>
 
           <div className="space-y-2">
             {queue.map((item) => (
               <div key={item.id} className="rounded-lg border border-slate-200 p-2 text-xs">
-                <div className="mb-1 font-semibold">
-                  #{item.index} {item.status} / seed:{item.seed}
-                </div>
-                <div className="mb-1 h-2 rounded bg-slate-200">
-                  <div className={`h-2 rounded ${item.status === 'failed' ? 'bg-red-500' : 'bg-indigo-500'}`} style={{ width: `${item.progress}%` }} />
-                </div>
-                {item.error && <div className="mb-1 text-[10px] text-red-600">{item.error}</div>}
+                <div className="mb-1 font-semibold">#{item.index} {item.status} / seed:{item.seed}</div>
+                <div className="mb-1 h-2 rounded bg-slate-200"><div className={`h-2 rounded ${item.status === 'failed' ? 'bg-red-500' : 'bg-indigo-500'}`} style={{ width: `${item.progress}%` }} /></div>
+                {Boolean((item.recipe as Record<string, unknown>).gesturePlan) && <div className="mb-1 text-[11px] text-slate-600">gesture plan metadata included</div>}
                 {(item.status === 'done' || item.status === 'failed') && (
                   <div className="flex flex-wrap gap-2">
                     <button className="btn-secondary" onClick={() => downloadQueueRecipe(item)}>JSONレシピ</button>
-                    <button
-                      className="btn-secondary"
-                      onClick={async () => {
-                        const artifact = await ensureArtifact(item);
-                        if (artifact.kind === 'url') downloadFromUrl(artifact.value, item.downloadName.replace('.webm', '.mp4'));
-                        else downloadFromUrl(artifact.value, item.downloadName);
-                      }}
-                    >
+                    <button className="btn-secondary" onClick={async () => { const artifact = await ensureArtifact(item); if (artifact.kind === 'url') downloadFromUrl(artifact.value, item.downloadName.replace('.webm', '.mp4')); else downloadFromUrl(artifact.value, item.downloadName); }}>
                       出力をダウンロード
                     </button>
                   </div>
@@ -619,11 +621,7 @@ export default function Page() {
       <section className="panel mt-4">
         <h2 className="mb-2 text-lg font-bold">プレビュー / ダウンロード</h2>
         <canvas ref={previewCanvasRef} className="w-full max-w-[720px] rounded-lg border border-slate-300 bg-slate-900" />
-        <p className="mt-2 text-xs text-slate-500">Canvas合成プレビュー（同一人物のまま背景/商品/スマホ重ね合わせ）</p>
-        <details className="mt-2 text-xs">
-          <summary className="cursor-pointer font-semibold">リップシンク・タイムラインメタデータ</summary>
-          <pre className="max-h-52 overflow-auto rounded bg-slate-900 p-2 text-emerald-300">{JSON.stringify(lipSyncTimeline, null, 2)}</pre>
-        </details>
+        <p className="mt-2 text-xs text-slate-500">download-first設計: 各アイテム個別DL + manifest一括DL。Cloud modeでも同様の操作で取得できます。</p>
       </section>
     </main>
   );

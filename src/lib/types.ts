@@ -62,21 +62,45 @@ export interface CloudSettings {
   overlayApiKey?: string;
 }
 
+export type GenerationMode = 'same_person_same_product' | 'same_person_product_swap' | 'person_swap_optional';
+export type ScriptVariationMode = 'exact' | 'paraphrase';
+
+export interface GestureSegment {
+  segment: 'hook' | 'problem' | 'solution' | 'cta';
+  text: string;
+  camera: string;
+  gesture: string;
+  expression: string;
+  tempo: string;
+}
+
+export interface GesturePlan {
+  productType: string;
+  segments: GestureSegment[];
+}
+
 export interface ProjectState {
   schemaVersion: number;
   projectName: string;
   language: Language;
   avatar?: UploadedAsset;
   productImage?: UploadedAsset;
+  productImages?: UploadedAsset[];
+  avatarSwapImages?: UploadedAsset[];
   outfitRef?: UploadedAsset;
   backgroundImage?: UploadedAsset;
   handheldProductImage?: UploadedAsset;
   smartphoneScreenImage?: UploadedAsset;
   holdReferenceImage?: UploadedAsset;
   identityLock?: IdentityLock;
+  keepIdentityLocked: boolean;
+  generationMode: GenerationMode;
+  scenarioCount: number;
   selectedSceneId?: string;
   selectedTemplateId?: string;
   script: string;
+  scriptVariationMode: ScriptVariationMode;
+  gesturePlan?: GesturePlan;
   voice: VoiceOptions;
   batchCount: number;
   clipLengthSec: number;
