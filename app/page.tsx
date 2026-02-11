@@ -6,7 +6,7 @@ import scriptTemplates from '@/data/script-templates.json';
 import { createDeterministicIdentityId } from '@/lib/identity';
 import { createProjectExportBlob, loadFromLocalStorage, saveToLocalStorage } from '@/lib/storage';
 import { createTTSAdapter } from '@/lib/tts';
-import { Language, ProjectState, QueueItem, ScenePreset, ScriptTemplate, UploadedAsset } from '@/lib/types';
+import { AspectRatio, Language, ProjectState, QueueItem, ScenePreset, ScriptTemplate, UploadedAsset } from '@/lib/types';
 
 const initialState: ProjectState = {
   projectName: '新規UGC案件',
@@ -15,10 +15,20 @@ const initialState: ProjectState = {
   voice: { style: 'natural', pauseMs: 220, breathiness: 20, prosodyRate: 1, pitch: 1 },
   batchCount: 5,
   clipLengthSec: 20,
+  aspectRatio: '9:16',
 };
 
 const scenes = scenePresets as ScenePreset[];
 const templates = scriptTemplates as ScriptTemplate[];
+
+const getVideoSize = (aspectRatio: AspectRatio) =>
+  aspectRatio === '16:9' ? { width: 1280, height: 720 } : { width: 1080, height: 1920 };
+
+const normalizeProjectState = (loaded: ProjectState): ProjectState => ({
+  ...initialState,
+  ...loaded,
+  aspectRatio: loaded.aspectRatio ?? '9:16',
+});
 
 async function fileToAsset(file: File): Promise<UploadedAsset> {
   const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -48,7 +58,7 @@ export default function Page() {
 
   useEffect(() => {
     const loaded = loadFromLocalStorage();
-    if (loaded) setState(loaded);
+    if (loaded) setState(normalizeProjectState(loaded));
   }, []);
 
   const selectedScene = scenes.find((s) => s.id === state.selectedSceneId);
@@ -69,24 +79,35 @@ export default function Page() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const { width, height } = getVideoSize(state.aspectRatio);
+    canvas.width = width;
+    canvas.height = height;
+
     let frame = 0;
     const id = setInterval(() => {
       frame += 1;
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const cardX = Math.round(width * 0.07) + (frame % Math.max(140, Math.round(width * 0.22)));
+      const cardY = Math.round(height * 0.16);
+      const cardW = Math.round(width * 0.22);
+      const cardH = Math.round(height * 0.28);
       ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(30 + (frame % 220), 60, 110, 180);
+      ctx.fillRect(cardX, cardY, cardW, cardH);
+
       ctx.fillStyle = '#f8fafc';
-      ctx.font = 'bold 20px sans-serif';
-      ctx.fillText(state.projectName, 24, 34);
-      ctx.font = '16px sans-serif';
-      ctx.fillText(selectedScene?.name ?? 'シーン未選択', 24, 270);
-      ctx.fillText(`言語: ${state.language}`, 24, 295);
-      ctx.fillText(`秒数: ${Math.min(state.clipLengthSec, 60)}秒`, 24, 320);
+      ctx.font = `${Math.max(18, Math.round(width * 0.018))}px sans-serif`;
+      ctx.fillText(state.projectName, Math.round(width * 0.05), Math.round(height * 0.06));
+      ctx.font = `${Math.max(16, Math.round(width * 0.014))}px sans-serif`;
+      ctx.fillText(selectedScene?.name ?? 'シーン未選択', Math.round(width * 0.05), Math.round(height * 0.76));
+      ctx.fillText(`言語: ${state.language}`, Math.round(width * 0.05), Math.round(height * 0.82));
+      ctx.fillText(`秒数: ${Math.min(state.clipLengthSec, 60)}秒`, Math.round(width * 0.05), Math.round(height * 0.88));
+      ctx.fillText(`比率: ${state.aspectRatio}`, Math.round(width * 0.05), Math.round(height * 0.94));
     }, 140);
 
     return () => clearInterval(id);
-  }, [state.projectName, state.language, state.clipLengthSec, selectedScene?.name]);
+  }, [state.projectName, state.language, state.clipLengthSec, state.aspectRatio, selectedScene?.name]);
 
   function patchState<K extends keyof ProjectState>(key: K, value: ProjectState[K]) {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -116,13 +137,16 @@ export default function Page() {
     const count = Math.min(20, Math.max(5, state.batchCount));
     const items: QueueItem[] = Array.from({ length: count }, (_, i) => {
       const id = crypto.randomUUID();
-      const ffmpegCommand = `ffmpeg -loop 1 -i avatar.png -i product.png -t ${Math.min(state.clipLengthSec, 60)} -vf \"scale=1080:1920,drawtext=text='${state.projectName}_${i + 1}'\" -c:v libx264 output_${i + 1}.mp4`;
+      const { width, height } = getVideoSize(state.aspectRatio);
+      const ffmpegCommand = `ffmpeg -loop 1 -i avatar.png -i product.png -t ${Math.min(state.clipLengthSec, 60)} -vf \"scale=${width}:${height},drawtext=text='${state.projectName}_${i + 1}'\" -c:v libx264 output_${i + 1}.mp4`;
       const recipe = {
         index: i + 1,
         language: state.language,
         sceneId: state.selectedSceneId,
         templateId: state.selectedTemplateId,
         voice: state.voice,
+        aspectRatio: state.aspectRatio,
+        resolution: `${width}x${height}`,
         lipSyncTimeline,
       };
       return {
@@ -132,7 +156,7 @@ export default function Page() {
         progress: 0,
         ffmpegCommand,
         recipe,
-        downloadName: `placeholder_${i + 1}.mp4`,
+        downloadName: `placeholder_${state.aspectRatio.replace(':', 'x')}_${i + 1}.mp4`,
       };
     });
 
@@ -172,7 +196,7 @@ export default function Page() {
     const file = evt.target.files?.[0];
     if (!file) return;
     const text = await file.text();
-    setState(JSON.parse(text) as ProjectState);
+    setState(normalizeProjectState(JSON.parse(text) as ProjectState));
   };
 
   const downloadQueueRecipe = (item: QueueItem) => {
@@ -228,7 +252,10 @@ export default function Page() {
 
           <div className="flex flex-wrap gap-2 pt-2">
             <button className="btn" onClick={saveLocal}>ローカル保存</button>
-            <button className="btn-secondary" onClick={() => setState(loadFromLocalStorage() ?? initialState)}>ローカル読込</button>
+            <button className="btn-secondary" onClick={() => {
+              const loaded = loadFromLocalStorage();
+              setState(loaded ? normalizeProjectState(loaded) : initialState);
+            }}>ローカル読込</button>
             <button className="btn-secondary" onClick={handleProjectExport}>JSON書き出し</button>
             <label className="btn-secondary cursor-pointer">
               JSON読み込み<input type="file" accept="application/json" className="hidden" onChange={handleProjectImport} />
@@ -309,7 +336,14 @@ export default function Page() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+            <div>
+              <label className="label">画角比率</label>
+              <select className="select" value={state.aspectRatio} onChange={(e) => patchState('aspectRatio', e.target.value as AspectRatio)}>
+                <option value="9:16">9:16（縦動画 / TikTok向け）</option>
+                <option value="16:9">16:9（横動画 / YouTube向け）</option>
+              </select>
+            </div>
             <div>
               <label className="label">バッチ本数 (5-20)</label>
               <input type="number" min={5} max={20} className="input" value={state.batchCount} onChange={(e) => patchState('batchCount', Number(e.target.value))} />
@@ -321,7 +355,8 @@ export default function Page() {
           </div>
 
           <button className="btn" onClick={startQueue} disabled={running}>デモ生成キュー開始</button>
-          <p className="text-xs text-slate-500">※ GitHub Pagesではffmpeg実行はせず、コマンドプレビューのみ生成します。</p>
+          <p className="text-xs text-slate-500">出力解像度: {getVideoSize(state.aspectRatio).width}x{getVideoSize(state.aspectRatio).height}</p>
+          <p className="text-xs text-slate-500">※ 生成結果は公開せず、各動画をダウンロードして利用する前提です。GitHub Pagesではffmpeg実行はせず、コマンドプレビューのみ生成します。</p>
 
           <div className="space-y-2">
             {queue.map((item) => (
@@ -345,8 +380,8 @@ export default function Page() {
 
       <section className="panel mt-4">
         <h2 className="mb-2 text-lg font-bold">プレビュー / ダウンロード</h2>
-        <canvas ref={previewCanvasRef} width={360} height={640} className="rounded-lg border border-slate-300" />
-        <p className="mt-2 text-xs text-slate-500">クライアントサイドCanvasでの疑似コンポジションプレビュー（最大60秒想定）</p>
+        <canvas ref={previewCanvasRef} className="w-full max-w-[720px] rounded-lg border border-slate-300 bg-slate-900" />
+        <p className="mt-2 text-xs text-slate-500">クライアントサイドCanvasでの疑似コンポジションプレビュー（最大60秒想定 / 9:16・16:9対応）</p>
         <details className="mt-2 text-xs">
           <summary className="cursor-pointer font-semibold">リップシンク・タイムラインメタデータ</summary>
           <pre className="max-h-52 overflow-auto rounded bg-slate-900 p-2 text-emerald-300">{JSON.stringify(lipSyncTimeline, null, 2)}</pre>

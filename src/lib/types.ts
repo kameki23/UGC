@@ -1,4 +1,5 @@
 export type Language = 'ja' | 'en' | 'ko' | 'zh';
+export type AspectRatio = '9:16' | '16:9';
 
 export interface UploadedAsset {
   name: string;
@@ -35,6 +36,7 @@ export interface ProjectState {
   voice: VoiceOptions;
   batchCount: number;
   clipLengthSec: number;
+  aspectRatio: AspectRatio;
 }
 
 export interface ScenePreset {
