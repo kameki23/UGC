@@ -1,0 +1,1901 @@
+[
+  {
+    "id": "scene-001",
+    "name": "リビングシーン 1",
+    "location": "リビング",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 12,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-002",
+    "name": "キッチンシーン 2",
+    "location": "キッチン",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 13,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-003",
+    "name": "寝室シーン 3",
+    "location": "寝室",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 14,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-004",
+    "name": "オフィスシーン 4",
+    "location": "オフィス",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 15,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-005",
+    "name": "カフェシーン 5",
+    "location": "カフェ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 16,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-006",
+    "name": "ジムシーン 6",
+    "location": "ジム",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 17,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-007",
+    "name": "ベランダシーン 7",
+    "location": "ベランダ",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 18,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-008",
+    "name": "洗面所シーン 8",
+    "location": "洗面所",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 19,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-009",
+    "name": "玄関シーン 9",
+    "location": "玄関",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 20,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-010",
+    "name": "スタジオシーン 10",
+    "location": "スタジオ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 21,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-011",
+    "name": "リビングシーン 11",
+    "location": "リビング",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 12,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-012",
+    "name": "キッチンシーン 12",
+    "location": "キッチン",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 13,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-013",
+    "name": "寝室シーン 13",
+    "location": "寝室",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 14,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-014",
+    "name": "オフィスシーン 14",
+    "location": "オフィス",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 15,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-015",
+    "name": "カフェシーン 15",
+    "location": "カフェ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 16,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-016",
+    "name": "ジムシーン 16",
+    "location": "ジム",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 17,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-017",
+    "name": "ベランダシーン 17",
+    "location": "ベランダ",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 18,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-018",
+    "name": "洗面所シーン 18",
+    "location": "洗面所",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 19,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-019",
+    "name": "玄関シーン 19",
+    "location": "玄関",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 20,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-020",
+    "name": "スタジオシーン 20",
+    "location": "スタジオ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 21,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-021",
+    "name": "リビングシーン 21",
+    "location": "リビング",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 12,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-022",
+    "name": "キッチンシーン 22",
+    "location": "キッチン",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 13,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-023",
+    "name": "寝室シーン 23",
+    "location": "寝室",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 14,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-024",
+    "name": "オフィスシーン 24",
+    "location": "オフィス",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 15,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-025",
+    "name": "カフェシーン 25",
+    "location": "カフェ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 16,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-026",
+    "name": "ジムシーン 26",
+    "location": "ジム",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 17,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-027",
+    "name": "ベランダシーン 27",
+    "location": "ベランダ",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 18,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-028",
+    "name": "洗面所シーン 28",
+    "location": "洗面所",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 19,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-029",
+    "name": "玄関シーン 29",
+    "location": "玄関",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 20,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-030",
+    "name": "スタジオシーン 30",
+    "location": "スタジオ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 21,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-031",
+    "name": "リビングシーン 31",
+    "location": "リビング",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 12,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-032",
+    "name": "キッチンシーン 32",
+    "location": "キッチン",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 13,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-033",
+    "name": "寝室シーン 33",
+    "location": "寝室",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 14,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-034",
+    "name": "オフィスシーン 34",
+    "location": "オフィス",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 15,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-035",
+    "name": "カフェシーン 35",
+    "location": "カフェ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 16,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-036",
+    "name": "ジムシーン 36",
+    "location": "ジム",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 17,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-037",
+    "name": "ベランダシーン 37",
+    "location": "ベランダ",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 18,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-038",
+    "name": "洗面所シーン 38",
+    "location": "洗面所",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 19,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-039",
+    "name": "玄関シーン 39",
+    "location": "玄関",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 20,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-040",
+    "name": "スタジオシーン 40",
+    "location": "スタジオ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 21,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-041",
+    "name": "リビングシーン 41",
+    "location": "リビング",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 12,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-042",
+    "name": "キッチンシーン 42",
+    "location": "キッチン",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 13,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-043",
+    "name": "寝室シーン 43",
+    "location": "寝室",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 14,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-044",
+    "name": "オフィスシーン 44",
+    "location": "オフィス",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 15,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-045",
+    "name": "カフェシーン 45",
+    "location": "カフェ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 16,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-046",
+    "name": "ジムシーン 46",
+    "location": "ジム",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 17,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-047",
+    "name": "ベランダシーン 47",
+    "location": "ベランダ",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 18,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-048",
+    "name": "洗面所シーン 48",
+    "location": "洗面所",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 19,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-049",
+    "name": "玄関シーン 49",
+    "location": "玄関",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 20,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-050",
+    "name": "スタジオシーン 50",
+    "location": "スタジオ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 21,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-051",
+    "name": "リビングシーン 51",
+    "location": "リビング",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 12,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-052",
+    "name": "キッチンシーン 52",
+    "location": "キッチン",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 13,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-053",
+    "name": "寝室シーン 53",
+    "location": "寝室",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 14,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-054",
+    "name": "オフィスシーン 54",
+    "location": "オフィス",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 15,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-055",
+    "name": "カフェシーン 55",
+    "location": "カフェ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 16,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-056",
+    "name": "ジムシーン 56",
+    "location": "ジム",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 17,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-057",
+    "name": "ベランダシーン 57",
+    "location": "ベランダ",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 18,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-058",
+    "name": "洗面所シーン 58",
+    "location": "洗面所",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 19,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-059",
+    "name": "玄関シーン 59",
+    "location": "玄関",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 20,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-060",
+    "name": "スタジオシーン 60",
+    "location": "スタジオ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 21,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-061",
+    "name": "リビングシーン 61",
+    "location": "リビング",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 12,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-062",
+    "name": "キッチンシーン 62",
+    "location": "キッチン",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 13,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-063",
+    "name": "寝室シーン 63",
+    "location": "寝室",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 14,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-064",
+    "name": "オフィスシーン 64",
+    "location": "オフィス",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 15,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-065",
+    "name": "カフェシーン 65",
+    "location": "カフェ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 16,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-066",
+    "name": "ジムシーン 66",
+    "location": "ジム",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 17,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-067",
+    "name": "ベランダシーン 67",
+    "location": "ベランダ",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 18,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-068",
+    "name": "洗面所シーン 68",
+    "location": "洗面所",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 19,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-069",
+    "name": "玄関シーン 69",
+    "location": "玄関",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 20,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-070",
+    "name": "スタジオシーン 70",
+    "location": "スタジオ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 21,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-071",
+    "name": "リビングシーン 71",
+    "location": "リビング",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 12,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-072",
+    "name": "キッチンシーン 72",
+    "location": "キッチン",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 13,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-073",
+    "name": "寝室シーン 73",
+    "location": "寝室",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 14,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-074",
+    "name": "オフィスシーン 74",
+    "location": "オフィス",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 15,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-075",
+    "name": "カフェシーン 75",
+    "location": "カフェ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 16,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-076",
+    "name": "ジムシーン 76",
+    "location": "ジム",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 17,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-077",
+    "name": "ベランダシーン 77",
+    "location": "ベランダ",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 18,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-078",
+    "name": "洗面所シーン 78",
+    "location": "洗面所",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 19,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-079",
+    "name": "玄関シーン 79",
+    "location": "玄関",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 20,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-080",
+    "name": "スタジオシーン 80",
+    "location": "スタジオ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 21,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-081",
+    "name": "リビングシーン 81",
+    "location": "リビング",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 12,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-082",
+    "name": "キッチンシーン 82",
+    "location": "キッチン",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 13,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-083",
+    "name": "寝室シーン 83",
+    "location": "寝室",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 14,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-084",
+    "name": "オフィスシーン 84",
+    "location": "オフィス",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 15,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-085",
+    "name": "カフェシーン 85",
+    "location": "カフェ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 16,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-086",
+    "name": "ジムシーン 86",
+    "location": "ジム",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 17,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-087",
+    "name": "ベランダシーン 87",
+    "location": "ベランダ",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 18,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-088",
+    "name": "洗面所シーン 88",
+    "location": "洗面所",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 19,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-089",
+    "name": "玄関シーン 89",
+    "location": "玄関",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 20,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-090",
+    "name": "スタジオシーン 90",
+    "location": "スタジオ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 21,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-091",
+    "name": "リビングシーン 91",
+    "location": "リビング",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 12,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-092",
+    "name": "キッチンシーン 92",
+    "location": "キッチン",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 13,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-093",
+    "name": "寝室シーン 93",
+    "location": "寝室",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 14,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-094",
+    "name": "オフィスシーン 94",
+    "location": "オフィス",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 15,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-095",
+    "name": "カフェシーン 95",
+    "location": "カフェ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 16,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-096",
+    "name": "ジムシーン 96",
+    "location": "ジム",
+    "lighting": "自然光",
+    "cameraMove": "固定",
+    "mood": "清潔感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 17,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-097",
+    "name": "ベランダシーン 97",
+    "location": "ベランダ",
+    "lighting": "ソフトボックス",
+    "cameraMove": "ゆっくりパン",
+    "mood": "高級感",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 18,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-098",
+    "name": "洗面所シーン 98",
+    "location": "洗面所",
+    "lighting": "夕方の逆光",
+    "cameraMove": "手持ち風",
+    "mood": "親しみ",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物"
+    ],
+    "durationSec": 19,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-099",
+    "name": "玄関シーン 99",
+    "location": "玄関",
+    "lighting": "ネオン",
+    "cameraMove": "ズームイン",
+    "mood": "元気",
+    "props": [
+      "商品パッケージ",
+      "マグカップ",
+      "観葉植物",
+      "ノートPC"
+    ],
+    "durationSec": 20,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  },
+  {
+    "id": "scene-100",
+    "name": "スタジオシーン 100",
+    "location": "スタジオ",
+    "lighting": "暖色ライト",
+    "cameraMove": "俯瞰",
+    "mood": "落ち着き",
+    "props": [
+      "商品パッケージ",
+      "マグカップ"
+    ],
+    "durationSec": 21,
+    "tags": [
+      "UGC",
+      "リアル",
+      "縦動画"
+    ]
+  }
+]

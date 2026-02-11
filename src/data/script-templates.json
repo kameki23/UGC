@@ -1,0 +1,802 @@
+[
+  {
+    "id": "tpl-001",
+    "title": "TikTok Shop台本テンプレ 1",
+    "style": "最初の3秒で惹きつける",
+    "body": "【導入】最初の3秒で惹きつける！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】今すぐ詳細を見る。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 20
+  },
+  {
+    "id": "tpl-002",
+    "title": "TikTok Shop台本テンプレ 2",
+    "style": "失敗談から入る",
+    "body": "【導入】失敗談から入る！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】プロフィールのリンクをチェック。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 21
+  },
+  {
+    "id": "tpl-003",
+    "title": "TikTok Shop台本テンプレ 3",
+    "style": "比較で見せる",
+    "body": "【導入】比較で見せる！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】保存してあとで見返してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 22
+  },
+  {
+    "id": "tpl-004",
+    "title": "TikTok Shop台本テンプレ 4",
+    "style": "ビフォーアフター",
+    "body": "【導入】ビフォーアフター！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】コメントで質問してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 23
+  },
+  {
+    "id": "tpl-005",
+    "title": "TikTok Shop台本テンプレ 5",
+    "style": "体験レビュー",
+    "body": "【導入】体験レビュー！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】今すぐ詳細を見る。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 24
+  },
+  {
+    "id": "tpl-006",
+    "title": "TikTok Shop台本テンプレ 6",
+    "style": "最初の3秒で惹きつける",
+    "body": "【導入】最初の3秒で惹きつける！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】プロフィールのリンクをチェック。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 25
+  },
+  {
+    "id": "tpl-007",
+    "title": "TikTok Shop台本テンプレ 7",
+    "style": "失敗談から入る",
+    "body": "【導入】失敗談から入る！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】保存してあとで見返してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 26
+  },
+  {
+    "id": "tpl-008",
+    "title": "TikTok Shop台本テンプレ 8",
+    "style": "比較で見せる",
+    "body": "【導入】比較で見せる！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】コメントで質問してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 27
+  },
+  {
+    "id": "tpl-009",
+    "title": "TikTok Shop台本テンプレ 9",
+    "style": "ビフォーアフター",
+    "body": "【導入】ビフォーアフター！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】今すぐ詳細を見る。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 28
+  },
+  {
+    "id": "tpl-010",
+    "title": "TikTok Shop台本テンプレ 10",
+    "style": "体験レビュー",
+    "body": "【導入】体験レビュー！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】プロフィールのリンクをチェック。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 29
+  },
+  {
+    "id": "tpl-011",
+    "title": "TikTok Shop台本テンプレ 11",
+    "style": "最初の3秒で惹きつける",
+    "body": "【導入】最初の3秒で惹きつける！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】保存してあとで見返してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 30
+  },
+  {
+    "id": "tpl-012",
+    "title": "TikTok Shop台本テンプレ 12",
+    "style": "失敗談から入る",
+    "body": "【導入】失敗談から入る！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】コメントで質問してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 31
+  },
+  {
+    "id": "tpl-013",
+    "title": "TikTok Shop台本テンプレ 13",
+    "style": "比較で見せる",
+    "body": "【導入】比較で見せる！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】今すぐ詳細を見る。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 32
+  },
+  {
+    "id": "tpl-014",
+    "title": "TikTok Shop台本テンプレ 14",
+    "style": "ビフォーアフター",
+    "body": "【導入】ビフォーアフター！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】プロフィールのリンクをチェック。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 33
+  },
+  {
+    "id": "tpl-015",
+    "title": "TikTok Shop台本テンプレ 15",
+    "style": "体験レビュー",
+    "body": "【導入】体験レビュー！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】保存してあとで見返してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 34
+  },
+  {
+    "id": "tpl-016",
+    "title": "TikTok Shop台本テンプレ 16",
+    "style": "最初の3秒で惹きつける",
+    "body": "【導入】最初の3秒で惹きつける！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】コメントで質問してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 35
+  },
+  {
+    "id": "tpl-017",
+    "title": "TikTok Shop台本テンプレ 17",
+    "style": "失敗談から入る",
+    "body": "【導入】失敗談から入る！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】今すぐ詳細を見る。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 36
+  },
+  {
+    "id": "tpl-018",
+    "title": "TikTok Shop台本テンプレ 18",
+    "style": "比較で見せる",
+    "body": "【導入】比較で見せる！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】プロフィールのリンクをチェック。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 37
+  },
+  {
+    "id": "tpl-019",
+    "title": "TikTok Shop台本テンプレ 19",
+    "style": "ビフォーアフター",
+    "body": "【導入】ビフォーアフター！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】保存してあとで見返してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 38
+  },
+  {
+    "id": "tpl-020",
+    "title": "TikTok Shop台本テンプレ 20",
+    "style": "体験レビュー",
+    "body": "【導入】体験レビュー！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】コメントで質問してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 39
+  },
+  {
+    "id": "tpl-021",
+    "title": "TikTok Shop台本テンプレ 21",
+    "style": "最初の3秒で惹きつける",
+    "body": "【導入】最初の3秒で惹きつける！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】今すぐ詳細を見る。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 40
+  },
+  {
+    "id": "tpl-022",
+    "title": "TikTok Shop台本テンプレ 22",
+    "style": "失敗談から入る",
+    "body": "【導入】失敗談から入る！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】プロフィールのリンクをチェック。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 41
+  },
+  {
+    "id": "tpl-023",
+    "title": "TikTok Shop台本テンプレ 23",
+    "style": "比較で見せる",
+    "body": "【導入】比較で見せる！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】保存してあとで見返してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 42
+  },
+  {
+    "id": "tpl-024",
+    "title": "TikTok Shop台本テンプレ 24",
+    "style": "ビフォーアフター",
+    "body": "【導入】ビフォーアフター！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】コメントで質問してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 43
+  },
+  {
+    "id": "tpl-025",
+    "title": "TikTok Shop台本テンプレ 25",
+    "style": "体験レビュー",
+    "body": "【導入】体験レビュー！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】今すぐ詳細を見る。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 44
+  },
+  {
+    "id": "tpl-026",
+    "title": "TikTok Shop台本テンプレ 26",
+    "style": "最初の3秒で惹きつける",
+    "body": "【導入】最初の3秒で惹きつける！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】プロフィールのリンクをチェック。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 20
+  },
+  {
+    "id": "tpl-027",
+    "title": "TikTok Shop台本テンプレ 27",
+    "style": "失敗談から入る",
+    "body": "【導入】失敗談から入る！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】保存してあとで見返してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 21
+  },
+  {
+    "id": "tpl-028",
+    "title": "TikTok Shop台本テンプレ 28",
+    "style": "比較で見せる",
+    "body": "【導入】比較で見せる！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】コメントで質問してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 22
+  },
+  {
+    "id": "tpl-029",
+    "title": "TikTok Shop台本テンプレ 29",
+    "style": "ビフォーアフター",
+    "body": "【導入】ビフォーアフター！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】今すぐ詳細を見る。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 23
+  },
+  {
+    "id": "tpl-030",
+    "title": "TikTok Shop台本テンプレ 30",
+    "style": "体験レビュー",
+    "body": "【導入】体験レビュー！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】プロフィールのリンクをチェック。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 24
+  },
+  {
+    "id": "tpl-031",
+    "title": "TikTok Shop台本テンプレ 31",
+    "style": "最初の3秒で惹きつける",
+    "body": "【導入】最初の3秒で惹きつける！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】保存してあとで見返してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 25
+  },
+  {
+    "id": "tpl-032",
+    "title": "TikTok Shop台本テンプレ 32",
+    "style": "失敗談から入る",
+    "body": "【導入】失敗談から入る！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】コメントで質問してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 26
+  },
+  {
+    "id": "tpl-033",
+    "title": "TikTok Shop台本テンプレ 33",
+    "style": "比較で見せる",
+    "body": "【導入】比較で見せる！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】今すぐ詳細を見る。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 27
+  },
+  {
+    "id": "tpl-034",
+    "title": "TikTok Shop台本テンプレ 34",
+    "style": "ビフォーアフター",
+    "body": "【導入】ビフォーアフター！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】プロフィールのリンクをチェック。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 28
+  },
+  {
+    "id": "tpl-035",
+    "title": "TikTok Shop台本テンプレ 35",
+    "style": "体験レビュー",
+    "body": "【導入】体験レビュー！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】保存してあとで見返してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 29
+  },
+  {
+    "id": "tpl-036",
+    "title": "TikTok Shop台本テンプレ 36",
+    "style": "最初の3秒で惹きつける",
+    "body": "【導入】最初の3秒で惹きつける！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】コメントで質問してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 30
+  },
+  {
+    "id": "tpl-037",
+    "title": "TikTok Shop台本テンプレ 37",
+    "style": "失敗談から入る",
+    "body": "【導入】失敗談から入る！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】今すぐ詳細を見る。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 31
+  },
+  {
+    "id": "tpl-038",
+    "title": "TikTok Shop台本テンプレ 38",
+    "style": "比較で見せる",
+    "body": "【導入】比較で見せる！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】プロフィールのリンクをチェック。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 32
+  },
+  {
+    "id": "tpl-039",
+    "title": "TikTok Shop台本テンプレ 39",
+    "style": "ビフォーアフター",
+    "body": "【導入】ビフォーアフター！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】保存してあとで見返してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 33
+  },
+  {
+    "id": "tpl-040",
+    "title": "TikTok Shop台本テンプレ 40",
+    "style": "体験レビュー",
+    "body": "【導入】体験レビュー！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】コメントで質問してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 34
+  },
+  {
+    "id": "tpl-041",
+    "title": "TikTok Shop台本テンプレ 41",
+    "style": "最初の3秒で惹きつける",
+    "body": "【導入】最初の3秒で惹きつける！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】今すぐ詳細を見る。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 35
+  },
+  {
+    "id": "tpl-042",
+    "title": "TikTok Shop台本テンプレ 42",
+    "style": "失敗談から入る",
+    "body": "【導入】失敗談から入る！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】プロフィールのリンクをチェック。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 36
+  },
+  {
+    "id": "tpl-043",
+    "title": "TikTok Shop台本テンプレ 43",
+    "style": "比較で見せる",
+    "body": "【導入】比較で見せる！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】保存してあとで見返してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 37
+  },
+  {
+    "id": "tpl-044",
+    "title": "TikTok Shop台本テンプレ 44",
+    "style": "ビフォーアフター",
+    "body": "【導入】ビフォーアフター！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】コメントで質問してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 38
+  },
+  {
+    "id": "tpl-045",
+    "title": "TikTok Shop台本テンプレ 45",
+    "style": "体験レビュー",
+    "body": "【導入】体験レビュー！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】今すぐ詳細を見る。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 39
+  },
+  {
+    "id": "tpl-046",
+    "title": "TikTok Shop台本テンプレ 46",
+    "style": "最初の3秒で惹きつける",
+    "body": "【導入】最初の3秒で惹きつける！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】プロフィールのリンクをチェック。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 40
+  },
+  {
+    "id": "tpl-047",
+    "title": "TikTok Shop台本テンプレ 47",
+    "style": "失敗談から入る",
+    "body": "【導入】失敗談から入る！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】保存してあとで見返してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 41
+  },
+  {
+    "id": "tpl-048",
+    "title": "TikTok Shop台本テンプレ 48",
+    "style": "比較で見せる",
+    "body": "【導入】比較で見せる！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】コメントで質問してね。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 42
+  },
+  {
+    "id": "tpl-049",
+    "title": "TikTok Shop台本テンプレ 49",
+    "style": "ビフォーアフター",
+    "body": "【導入】ビフォーアフター！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】今すぐ詳細を見る。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 43
+  },
+  {
+    "id": "tpl-050",
+    "title": "TikTok Shop台本テンプレ 50",
+    "style": "体験レビュー",
+    "body": "【導入】体験レビュー！\n【悩み】{{target_audience}}の悩みは「{{pain_point}}」。\n【提案】そこで{{product_name}}を{{usage_scene}}で使ってみました。\n【根拠】{{benefit_1}}・{{benefit_2}}・{{benefit_3}}が特に実感ポイント。\n【締め】プロフィールのリンクをチェック。",
+    "placeholders": [
+      "target_audience",
+      "pain_point",
+      "product_name",
+      "usage_scene",
+      "benefit_1",
+      "benefit_2",
+      "benefit_3"
+    ],
+    "recommendedDurationSec": 44
+  }
+]
