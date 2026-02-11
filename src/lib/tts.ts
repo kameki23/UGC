@@ -1,7 +1,8 @@
-import { VoiceOptions } from './types';
+import { Language, VoiceOptions } from './types';
 
 export interface TTSAdapter {
   speak(text: string, options: VoiceOptions): Promise<void>;
+  synthesize?(text: string, options: VoiceOptions, language: Language): Promise<Blob>;
   name: string;
 }
 
@@ -19,6 +20,46 @@ export class BrowserSpeechAdapter implements TTSAdapter {
   }
 }
 
+export class ElevenLabsAdapter implements TTSAdapter {
+  name = 'elevenlabs';
+
+  constructor(private apiKey: string, private voiceId: string) {}
+
+  async speak(text: string, options: VoiceOptions): Promise<void> {
+    const audio = await this.synthesize(text, options, 'ja');
+    const url = URL.createObjectURL(audio);
+    const player = new Audio(url);
+    await player.play();
+  }
+
+  async synthesize(text: string, options: VoiceOptions, language: Language): Promise<Blob> {
+    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${this.voiceId}`, {
+      method: 'POST',
+      headers: {
+        'xi-api-key': this.apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model_id: 'eleven_multilingual_v2',
+        text,
+        voice_settings: {
+          stability: Math.max(0, Math.min(1, 0.3 + options.pauseMs / 1000)),
+          similarity_boost: 0.75,
+          style: Math.max(0, Math.min(1, options.breathiness / 100)),
+          use_speaker_boost: true,
+        },
+        pronunciation_dictionary_locators: [],
+        language_code: language,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`ElevenLabs TTS failed: ${res.status} ${await res.text()}`);
+    }
+    return await res.blob();
+  }
+}
+
 export class MockCloudTTSAdapter implements TTSAdapter {
   name = 'mock-cloud-tts';
 
@@ -26,10 +67,19 @@ export class MockCloudTTSAdapter implements TTSAdapter {
     console.info('Mock TTS request', { text, options });
     await new Promise((resolve) => setTimeout(resolve, 400));
   }
+
+  async synthesize(): Promise<Blob> {
+    return new Blob(['mock audio'], { type: 'audio/mpeg' });
+  }
 }
 
 export function createTTSAdapter(preferCloud = false): TTSAdapter {
   if (preferCloud) return new MockCloudTTSAdapter();
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) return new BrowserSpeechAdapter();
   return new MockCloudTTSAdapter();
+}
+
+export function createElevenLabsAdapter(apiKey?: string, voiceId?: string): TTSAdapter {
+  if (!apiKey || !voiceId) return new MockCloudTTSAdapter();
+  return new ElevenLabsAdapter(apiKey, voiceId);
 }

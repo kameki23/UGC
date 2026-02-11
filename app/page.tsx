@@ -3,9 +3,10 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import scenePresets from '@/data/scene-presets.json';
 import scriptTemplates from '@/data/script-templates.json';
+import { generateLipSyncVideoWithSync } from '@/lib/cloud';
 import { createDeterministicIdentityId } from '@/lib/identity';
 import { createProjectExportBlob, loadFromLocalStorage, saveToLocalStorage } from '@/lib/storage';
-import { createTTSAdapter } from '@/lib/tts';
+import { createElevenLabsAdapter } from '@/lib/tts';
 import { AspectRatio, Language, ProjectState, QueueItem, ScenePreset, ScriptTemplate, UploadedAsset } from '@/lib/types';
 
 const initialState: ProjectState = {
@@ -16,6 +17,12 @@ const initialState: ProjectState = {
   batchCount: 5,
   clipLengthSec: 20,
   aspectRatio: '9:16',
+  cloud: {
+    mode: 'demo',
+    elevenLabsApiKey: '',
+    elevenLabsVoiceId: '',
+    syncApiToken: '',
+  },
 };
 
 const scenes = scenePresets as ScenePreset[];
@@ -27,6 +34,10 @@ const getVideoSize = (aspectRatio: AspectRatio) =>
 const normalizeProjectState = (loaded: ProjectState): ProjectState => ({
   ...initialState,
   ...loaded,
+  cloud: {
+    ...initialState.cloud,
+    ...(loaded.cloud ?? {}),
+  },
   aspectRatio: loaded.aspectRatio ?? '9:16',
 });
 
@@ -47,6 +58,15 @@ function downloadBlob(blob: Blob, filename: string) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function downloadFromUrl(url: string, filename: string) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  a.click();
 }
 
 export default function Page() {
@@ -134,7 +154,7 @@ export default function Page() {
   };
 
   const startQueue = () => {
-    const count = Math.min(20, Math.max(5, state.batchCount));
+    const count = Math.min(20, Math.max(1, state.batchCount));
     const items: QueueItem[] = Array.from({ length: count }, (_, i) => {
       const id = crypto.randomUUID();
       const { width, height } = getVideoSize(state.aspectRatio);
@@ -156,24 +176,88 @@ export default function Page() {
         progress: 0,
         ffmpegCommand,
         recipe,
-        downloadName: `placeholder_${state.aspectRatio.replace(':', 'x')}_${i + 1}.mp4`,
+        downloadName: `ugc_${state.aspectRatio.replace(':', 'x')}_${i + 1}.mp4`,
       };
     });
 
     setQueue(items);
+    setStatus(state.cloud.mode === 'cloud' ? 'クラウド生成キューを開始しました' : 'デモ生成キューを開始しました');
+  };
+
+  const runCloudGeneration = async () => {
+    if (!state.avatar) {
+      setStatus('クラウド生成には人物画像が必要です');
+      return;
+    }
+    if (!state.cloud.elevenLabsApiKey || !state.cloud.elevenLabsVoiceId || !state.cloud.syncApiToken) {
+      setStatus('クラウド生成にはElevenLabs API Key/Voice ID と Sync API Tokenが必要です');
+      return;
+    }
+
     setRunning(true);
-    setStatus('キュー生成を開始しました');
+    try {
+      for (const item of queue) {
+        setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, status: 'rendering', progress: 15 } : q)));
+
+        const tts = createElevenLabsAdapter(state.cloud.elevenLabsApiKey, state.cloud.elevenLabsVoiceId);
+        if (!tts.synthesize) throw new Error('TTS adapter synthesize未対応');
+
+        const audioBlob = await tts.synthesize(state.script.slice(0, 1200), state.voice, state.language);
+        const audioUrl = URL.createObjectURL(audioBlob);
+        setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, progress: 50, audioUrl } : q)));
+
+        const videoUrl = await generateLipSyncVideoWithSync(
+          state.cloud.syncApiToken,
+          state.avatar.dataUrl,
+          audioBlob,
+          state.language,
+          state.aspectRatio,
+        );
+
+        setQueue((prev) =>
+          prev.map((q) =>
+            q.id === item.id
+              ? {
+                  ...q,
+                  status: 'done',
+                  progress: 100,
+                  videoUrl,
+                }
+              : q,
+          ),
+        );
+      }
+      setStatus('クラウド生成が完了しました。各行の「生成MP4を開く」から保存できます。');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setQueue((prev) => {
+        const working = [...prev];
+        const target = working.find((x) => x.status === 'rendering') ?? working.find((x) => x.status === 'queued');
+        if (target) {
+          target.status = 'failed';
+          target.error = message;
+        }
+        return working;
+      });
+      setStatus(`クラウド生成でエラー: ${message}`);
+    } finally {
+      setRunning(false);
+    }
   };
 
   useEffect(() => {
-    if (!running || queue.length === 0) return;
+    if (queue.length === 0) return;
+    if (running) return;
+    if (state.cloud.mode === 'cloud') return;
+
+    setRunning(true);
     const timer = setInterval(() => {
       setQueue((prev) => {
         const working = [...prev];
         const current = working.find((x) => x.status !== 'done');
         if (!current) {
           setRunning(false);
-          setStatus('すべての動画レシピを生成しました');
+          setStatus('すべての動画レシピを生成しました（デモ）');
           clearInterval(timer);
           return prev;
         }
@@ -188,7 +272,16 @@ export default function Page() {
     }, 500);
 
     return () => clearInterval(timer);
-  }, [running, queue.length]);
+  }, [queue.length, running, state.cloud.mode]);
+
+  useEffect(() => {
+    if (queue.length === 0) return;
+    if (state.cloud.mode !== 'cloud') return;
+    if (running) return;
+
+    void runCloudGeneration();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queue, state.cloud.mode]);
 
   const handleProjectExport = () => downloadBlob(createProjectExportBlob(state), `${state.projectName}.json`);
 
@@ -204,14 +297,14 @@ export default function Page() {
   };
 
   const downloadPlaceholderMp4 = (item: QueueItem) => {
-    const content = `Placeholder MP4 for ${item.downloadName}\nGenerated by static demo on GH Pages.`;
+    const content = `Placeholder MP4 for ${item.downloadName}\nGenerated by demo mode.`;
     downloadBlob(new Blob([content], { type: 'video/mp4' }), item.downloadName);
   };
 
   const speakPreview = async () => {
-    const adapter = createTTSAdapter(false);
-    await adapter.speak(state.script.slice(0, 120), state.voice);
-    setStatus(`音声プレビュー再生: ${adapter.name}`);
+    const tts = createElevenLabsAdapter(state.cloud.elevenLabsApiKey, state.cloud.elevenLabsVoiceId);
+    await tts.speak(state.script.slice(0, 120), state.voice);
+    setStatus(`音声プレビュー再生: ${tts.name}`);
   };
 
   const saveLocal = () => {
@@ -227,6 +320,20 @@ export default function Page() {
 
       <h1 className="mb-4 text-2xl font-bold">UGC動画量産スタジオ</h1>
       <p className="mb-4 text-sm text-slate-600">{status}</p>
+
+      <div className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm">
+        <div className="mb-2 font-semibold">生成モード</div>
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
+          <select className="select" value={state.cloud.mode} onChange={(e) => patchState('cloud', { ...state.cloud, mode: e.target.value as 'demo' | 'cloud' })}>
+            <option value="demo">デモ（ローカル疑似生成）</option>
+            <option value="cloud">クラウド（実生成）</option>
+          </select>
+          <input className="input" placeholder="ElevenLabs API Key" value={state.cloud.elevenLabsApiKey ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, elevenLabsApiKey: e.target.value })} />
+          <input className="input" placeholder="ElevenLabs Voice ID" value={state.cloud.elevenLabsVoiceId ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, elevenLabsVoiceId: e.target.value })} />
+          <input className="input" placeholder="Sync API Token" value={state.cloud.syncApiToken ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, syncApiToken: e.target.value })} />
+        </div>
+        <p className="mt-2 text-xs text-slate-600">※ APIキーはブラウザ内保存です。公開URLで使う場合は漏洩に注意してください（必要なら使い捨てキー推奨）。</p>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <section className="panel space-y-3">
@@ -317,7 +424,7 @@ export default function Page() {
               <input type="number" step="0.1" className="input" value={state.voice.prosodyRate} onChange={(e) => patchState('voice', { ...state.voice, prosodyRate: Number(e.target.value) })} />
             </div>
           </div>
-          <button className="btn" onClick={speakPreview}>音声プレビュー（ブラウザTTSフォールバック）</button>
+          <button className="btn" onClick={speakPreview}>音声プレビュー（ElevenLabs優先）</button>
         </section>
 
         <section className="panel space-y-3">
@@ -345,8 +452,8 @@ export default function Page() {
               </select>
             </div>
             <div>
-              <label className="label">バッチ本数 (5-20)</label>
-              <input type="number" min={5} max={20} className="input" value={state.batchCount} onChange={(e) => patchState('batchCount', Number(e.target.value))} />
+              <label className="label">バッチ本数 (1-20)</label>
+              <input type="number" min={1} max={20} className="input" value={state.batchCount} onChange={(e) => patchState('batchCount', Number(e.target.value))} />
             </div>
             <div>
               <label className="label">1本の長さ (&lt;=60秒)</label>
@@ -354,22 +461,27 @@ export default function Page() {
             </div>
           </div>
 
-          <button className="btn" onClick={startQueue} disabled={running}>デモ生成キュー開始</button>
+          <button className="btn" onClick={startQueue} disabled={running}>生成キュー開始</button>
           <p className="text-xs text-slate-500">出力解像度: {getVideoSize(state.aspectRatio).width}x{getVideoSize(state.aspectRatio).height}</p>
-          <p className="text-xs text-slate-500">※ 生成結果は公開せず、各動画をダウンロードして利用する前提です。GitHub Pagesではffmpeg実行はせず、コマンドプレビューのみ生成します。</p>
+          <p className="text-xs text-slate-500">※ 生成結果は公開せず、各動画をダウンロードして利用する前提です。</p>
 
           <div className="space-y-2">
             {queue.map((item) => (
               <div key={item.id} className="rounded-lg border border-slate-200 p-2 text-xs">
                 <div className="mb-1 font-semibold">#{item.index} {item.status}</div>
                 <div className="mb-1 h-2 rounded bg-slate-200">
-                  <div className="h-2 rounded bg-indigo-500" style={{ width: `${item.progress}%` }} />
+                  <div className={`h-2 rounded ${item.status === 'failed' ? 'bg-red-500' : 'bg-indigo-500'}`} style={{ width: `${item.progress}%` }} />
                 </div>
                 <div className="mb-1 overflow-x-auto text-[10px] text-slate-600">{item.ffmpegCommand}</div>
-                {item.status === 'done' && (
-                  <div className="flex gap-2">
+                {item.error && <div className="mb-1 text-[10px] text-red-600">{item.error}</div>}
+                {(item.status === 'done' || item.status === 'failed') && (
+                  <div className="flex flex-wrap gap-2">
                     <button className="btn-secondary" onClick={() => downloadQueueRecipe(item)}>JSONレシピ</button>
-                    <button className="btn-secondary" onClick={() => downloadPlaceholderMp4(item)}>MP4プレースホルダ</button>
+                    {item.videoUrl ? (
+                      <button className="btn-secondary" onClick={() => downloadFromUrl(item.videoUrl!, item.downloadName)}>生成MP4を開く</button>
+                    ) : (
+                      <button className="btn-secondary" onClick={() => downloadPlaceholderMp4(item)}>MP4プレースホルダ</button>
+                    )}
                   </div>
                 )}
               </div>

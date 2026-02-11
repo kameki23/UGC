@@ -23,6 +23,14 @@ export interface VoiceOptions {
   pitch: number;
 }
 
+export interface CloudSettings {
+  mode: 'demo' | 'cloud';
+  elevenLabsApiKey?: string;
+  elevenLabsVoiceId?: string;
+  syncApiToken?: string;
+  syncModelId?: string;
+}
+
 export interface ProjectState {
   projectName: string;
   language: Language;
@@ -37,6 +45,7 @@ export interface ProjectState {
   batchCount: number;
   clipLengthSec: number;
   aspectRatio: AspectRatio;
+  cloud: CloudSettings;
 }
 
 export interface ScenePreset {
@@ -63,9 +72,12 @@ export interface ScriptTemplate {
 export interface QueueItem {
   id: string;
   index: number;
-  status: 'queued' | 'rendering' | 'done';
+  status: 'queued' | 'rendering' | 'done' | 'failed';
   progress: number;
   ffmpegCommand: string;
   recipe: Record<string, unknown>;
   downloadName: string;
+  audioUrl?: string;
+  videoUrl?: string;
+  error?: string;
 }
