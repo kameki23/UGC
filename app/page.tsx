@@ -4,12 +4,14 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import scenePresets from '@/data/scene-presets.json';
 import scriptTemplates from '@/data/script-templates.json';
 import { generateLipSyncVideoWithSync } from '@/lib/cloud';
+import { createOverlayProvider, createPlaceholderVideoBlob } from '@/lib/compositor';
 import { createDeterministicIdentityId } from '@/lib/identity';
-import { createProjectExportBlob, loadFromLocalStorage, saveToLocalStorage } from '@/lib/storage';
+import { createProjectExportBlob, defaultComposition, defaultVariation, loadFromLocalStorage, saveToLocalStorage } from '@/lib/storage';
 import { createElevenLabsAdapter } from '@/lib/tts';
-import { AspectRatio, Language, ProjectState, QueueItem, ScenePreset, ScriptTemplate, UploadedAsset } from '@/lib/types';
+import { AspectRatio, Language, ProjectState, QueueItem, ScenePreset, ScriptTemplate, UploadedAsset, VariationPreset } from '@/lib/types';
 
 const initialState: ProjectState = {
+  schemaVersion: 2,
   projectName: '新規UGC案件',
   language: 'ja',
   script: 'ここに台本を編集してください。',
@@ -22,23 +24,27 @@ const initialState: ProjectState = {
     elevenLabsApiKey: '',
     elevenLabsVoiceId: '',
     syncApiToken: '',
+    syncModelId: 'lipsync-2',
+    overlayProvider: 'auto',
+    overlayApiKey: '',
   },
+  composition: defaultComposition,
+  variation: defaultVariation,
 };
 
 const scenes = scenePresets as ScenePreset[];
 const templates = scriptTemplates as ScriptTemplate[];
 
-const getVideoSize = (aspectRatio: AspectRatio) =>
-  aspectRatio === '16:9' ? { width: 1280, height: 720 } : { width: 1080, height: 1920 };
+const getVideoSize = (aspectRatio: AspectRatio) => (aspectRatio === '16:9' ? { width: 1280, height: 720 } : { width: 1080, height: 1920 });
 
 const normalizeProjectState = (loaded: ProjectState): ProjectState => ({
   ...initialState,
   ...loaded,
-  cloud: {
-    ...initialState.cloud,
-    ...(loaded.cloud ?? {}),
-  },
-  aspectRatio: loaded.aspectRatio ?? '9:16',
+  schemaVersion: 2,
+  cloud: { ...initialState.cloud, ...(loaded.cloud ?? {}) },
+  composition: { ...initialState.composition, ...(loaded.composition ?? {}) },
+  variation: { ...initialState.variation, ...(loaded.variation ?? {}) },
+  handheldProductImage: loaded.handheldProductImage ?? loaded.productImage,
 });
 
 async function fileToAsset(file: File): Promise<UploadedAsset> {
@@ -68,6 +74,12 @@ function downloadFromUrl(url: string, filename: string) {
   a.rel = 'noopener noreferrer';
   a.click();
 }
+
+const variationPresetValues: Record<VariationPreset, Pick<ProjectState['variation'], 'sceneJitter' | 'outfitJitter' | 'backgroundJitter'>> = {
+  stable: { sceneJitter: 0.06, outfitJitter: 0.05, backgroundJitter: 0.05 },
+  balanced: { sceneJitter: 0.2, outfitJitter: 0.15, backgroundJitter: 0.15 },
+  explore: { sceneJitter: 0.42, outfitJitter: 0.35, backgroundJitter: 0.38 },
+};
 
 export default function Page() {
   const [state, setState] = useState<ProjectState>(initialState);
@@ -109,10 +121,18 @@ export default function Page() {
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      if (state.backgroundImage) {
+        const bg = new Image();
+        bg.src = state.backgroundImage.dataUrl;
+        ctx.globalAlpha = 0.9;
+        ctx.drawImage(bg, 0, 0, width, height);
+      }
+
       const cardX = Math.round(width * 0.07) + (frame % Math.max(140, Math.round(width * 0.22)));
       const cardY = Math.round(height * 0.16);
       const cardW = Math.round(width * 0.22);
       const cardH = Math.round(height * 0.28);
+      ctx.globalAlpha = 1;
       ctx.fillStyle = '#38bdf8';
       ctx.fillRect(cardX, cardY, cardW, cardH);
 
@@ -124,16 +144,19 @@ export default function Page() {
       ctx.fillText(`言語: ${state.language}`, Math.round(width * 0.05), Math.round(height * 0.82));
       ctx.fillText(`秒数: ${Math.min(state.clipLengthSec, 60)}秒`, Math.round(width * 0.05), Math.round(height * 0.88));
       ctx.fillText(`比率: ${state.aspectRatio}`, Math.round(width * 0.05), Math.round(height * 0.94));
-    }, 140);
+    }, 160);
 
     return () => clearInterval(id);
-  }, [state.projectName, state.language, state.clipLengthSec, state.aspectRatio, selectedScene?.name]);
+  }, [state.projectName, state.language, state.clipLengthSec, state.aspectRatio, selectedScene?.name, state.backgroundImage]);
 
   function patchState<K extends keyof ProjectState>(key: K, value: ProjectState[K]) {
     setState((prev) => ({ ...prev, [key]: value }));
   }
 
-  const onUpload = async (evt: ChangeEvent<HTMLInputElement>, key: 'avatar' | 'productImage' | 'outfitRef') => {
+  const onUpload = async (
+    evt: ChangeEvent<HTMLInputElement>,
+    key: 'avatar' | 'productImage' | 'outfitRef' | 'backgroundImage' | 'handheldProductImage' | 'smartphoneScreenImage' | 'holdReferenceImage',
+  ) => {
     const file = evt.target.files?.[0];
     if (!file) return;
     const asset = await fileToAsset(file);
@@ -153,35 +176,54 @@ export default function Page() {
     });
   };
 
-  const startQueue = () => {
+  const buildQueueItems = (append = false) => {
     const count = Math.min(20, Math.max(1, state.batchCount));
+    const existing = append ? queue.length : 0;
     const items: QueueItem[] = Array.from({ length: count }, (_, i) => {
+      const idx = existing + i + 1;
       const id = crypto.randomUUID();
       const { width, height } = getVideoSize(state.aspectRatio);
-      const ffmpegCommand = `ffmpeg -loop 1 -i avatar.png -i product.png -t ${Math.min(state.clipLengthSec, 60)} -vf \"scale=${width}:${height},drawtext=text='${state.projectName}_${i + 1}'\" -c:v libx264 output_${i + 1}.mp4`;
+      const itemSeed = state.variation.seed + idx * 17;
+      const ffmpegCommand = `ffmpeg -loop 1 -i composed_${idx}.png -i voice_${idx}.mp3 -t ${Math.min(state.clipLengthSec, 60)} -vf "scale=${width}:${height}" -c:v libx264 output_${idx}.mp4`;
       const recipe = {
-        index: i + 1,
+        index: idx,
+        seed: itemSeed,
         language: state.language,
         sceneId: state.selectedSceneId,
         templateId: state.selectedTemplateId,
         voice: state.voice,
         aspectRatio: state.aspectRatio,
+        variation: state.variation,
+        composition: state.composition,
         resolution: `${width}x${height}`,
         lipSyncTimeline,
       };
       return {
         id,
-        index: i + 1,
+        index: idx,
         status: 'queued',
         progress: 0,
         ffmpegCommand,
         recipe,
-        downloadName: `ugc_${state.aspectRatio.replace(':', 'x')}_${i + 1}.mp4`,
+        seed: itemSeed,
+        downloadName: `ugc_${state.aspectRatio.replace(':', 'x')}_${idx}.webm`,
       };
     });
 
-    setQueue(items);
-    setStatus(state.cloud.mode === 'cloud' ? 'クラウド生成キューを開始しました' : 'デモ生成キューを開始しました');
+    setQueue((prev) => (append ? [...prev, ...items] : items));
+    setStatus(append ? `追加キュー ${count} 本を連結しました` : '生成キューを開始しました');
+  };
+
+  const ensureArtifact = async (item: QueueItem) => {
+    if (item.videoUrl) return { kind: 'url' as const, value: item.videoUrl };
+    if (item.artifactUrl) return { kind: 'blob' as const, value: item.artifactUrl };
+
+    const source = item.composedImageUrl ?? state.avatar?.dataUrl;
+    if (!source) throw new Error('ダウンロード元アセットがありません');
+    const { blob, mimeType } = await createPlaceholderVideoBlob(source, state.clipLengthSec);
+    const artifactUrl = URL.createObjectURL(blob);
+    setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, artifactUrl, artifactMime: mimeType } : q)));
+    return { kind: 'blob' as const, value: artifactUrl };
   };
 
   const runCloudGeneration = async () => {
@@ -197,37 +239,35 @@ export default function Page() {
     setRunning(true);
     try {
       for (const item of queue) {
-        setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, status: 'rendering', progress: 15 } : q)));
+        if (item.status !== 'queued') continue;
+
+        setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, status: 'rendering', progress: 8 } : q)));
+
+        const { width, height } = getVideoSize(state.aspectRatio);
+        const overlayProvider = createOverlayProvider(state);
+        const overlay = await overlayProvider.synthesize({ state, seed: item.seed, width, height });
+
+        setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, composedImageUrl: overlay.composedDataUrl, progress: 28 } : q)));
 
         const tts = createElevenLabsAdapter(state.cloud.elevenLabsApiKey, state.cloud.elevenLabsVoiceId);
         if (!tts.synthesize) throw new Error('TTS adapter synthesize未対応');
 
         const audioBlob = await tts.synthesize(state.script.slice(0, 1200), state.voice, state.language);
         const audioUrl = URL.createObjectURL(audioBlob);
-        setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, progress: 50, audioUrl } : q)));
+        setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, progress: 56, audioUrl } : q)));
 
         const videoUrl = await generateLipSyncVideoWithSync(
           state.cloud.syncApiToken,
-          state.avatar.dataUrl,
+          overlay.composedDataUrl,
           audioBlob,
           state.language,
           state.aspectRatio,
+          state.cloud.syncModelId || 'lipsync-2',
         );
 
-        setQueue((prev) =>
-          prev.map((q) =>
-            q.id === item.id
-              ? {
-                  ...q,
-                  status: 'done',
-                  progress: 100,
-                  videoUrl,
-                }
-              : q,
-          ),
-        );
+        setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, status: 'done', progress: 100, videoUrl } : q)));
       }
-      setStatus('クラウド生成が完了しました。各行の「生成MP4を開く」から保存できます。');
+      setStatus('クラウド生成が完了しました。未返却時はローカルplaceholderを生成して保存できます。');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       setQueue((prev) => {
@@ -246,39 +286,46 @@ export default function Page() {
   };
 
   useEffect(() => {
-    if (queue.length === 0) return;
-    if (running) return;
-    if (state.cloud.mode === 'cloud') return;
+    if (queue.length === 0 || running || state.cloud.mode === 'cloud') return;
 
     setRunning(true);
-    const timer = setInterval(() => {
-      setQueue((prev) => {
-        const working = [...prev];
-        const current = working.find((x) => x.status !== 'done');
-        if (!current) {
-          setRunning(false);
-          setStatus('すべての動画レシピを生成しました（デモ）');
-          clearInterval(timer);
-          return prev;
-        }
-        if (current.status === 'queued') current.status = 'rendering';
-        current.progress = Math.min(100, current.progress + 10 + Math.random() * 18);
-        if (current.progress >= 100) {
-          current.progress = 100;
-          current.status = 'done';
-        }
-        return working;
-      });
-    }, 500);
+    const timer = setInterval(async () => {
+      const current = queue.find((x) => x.status === 'queued' || x.status === 'rendering');
+      if (!current) {
+        setRunning(false);
+        setStatus('すべての動画レシピを生成しました（デモ）');
+        clearInterval(timer);
+        return;
+      }
+
+      if (current.status === 'queued') {
+        setQueue((prev) => prev.map((x) => (x.id === current.id ? { ...x, status: 'rendering', progress: 12 } : x)));
+      } else {
+        const nextProgress = Math.min(90, current.progress + 20);
+        setQueue((prev) => prev.map((x) => (x.id === current.id ? { ...x, progress: nextProgress } : x)));
+      }
+
+      const currentFresh = queue.find((x) => x.id === current.id) ?? current;
+      if (currentFresh.progress >= 72) {
+        const { width, height } = getVideoSize(state.aspectRatio);
+        const overlay = await createOverlayProvider(state).synthesize({ state, seed: current.seed, width, height });
+        const artifact = await createPlaceholderVideoBlob(overlay.composedDataUrl, state.clipLengthSec);
+        const artifactUrl = URL.createObjectURL(artifact.blob);
+        setQueue((prev) =>
+          prev.map((x) =>
+            x.id === current.id
+              ? { ...x, status: 'done', progress: 100, composedImageUrl: overlay.composedDataUrl, artifactUrl, artifactMime: artifact.mimeType }
+              : x,
+          ),
+        );
+      }
+    }, 650);
 
     return () => clearInterval(timer);
-  }, [queue.length, running, state.cloud.mode]);
+  }, [queue, running, state, state.cloud.mode, state.aspectRatio, state.clipLengthSec]);
 
   useEffect(() => {
-    if (queue.length === 0) return;
-    if (state.cloud.mode !== 'cloud') return;
-    if (running) return;
-
+    if (queue.length === 0 || state.cloud.mode !== 'cloud' || running) return;
     void runCloudGeneration();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queue, state.cloud.mode]);
@@ -294,11 +341,6 @@ export default function Page() {
 
   const downloadQueueRecipe = (item: QueueItem) => {
     downloadBlob(new Blob([JSON.stringify(item.recipe, null, 2)], { type: 'application/json' }), `recipe_${item.index}.json`);
-  };
-
-  const downloadPlaceholderMp4 = (item: QueueItem) => {
-    const content = `Placeholder MP4 for ${item.downloadName}\nGenerated by demo mode.`;
-    downloadBlob(new Blob([content], { type: 'video/mp4' }), item.downloadName);
   };
 
   const speakPreview = async () => {
@@ -322,7 +364,7 @@ export default function Page() {
       <p className="mb-4 text-sm text-slate-600">{status}</p>
 
       <div className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm">
-        <div className="mb-2 font-semibold">生成モード</div>
+        <div className="mb-2 font-semibold">生成モード / クラウド設定</div>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
           <select className="select" value={state.cloud.mode} onChange={(e) => patchState('cloud', { ...state.cloud, mode: e.target.value as 'demo' | 'cloud' })}>
             <option value="demo">デモ（ローカル疑似生成）</option>
@@ -331,8 +373,15 @@ export default function Page() {
           <input className="input" placeholder="ElevenLabs API Key" value={state.cloud.elevenLabsApiKey ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, elevenLabsApiKey: e.target.value })} />
           <input className="input" placeholder="ElevenLabs Voice ID" value={state.cloud.elevenLabsVoiceId ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, elevenLabsVoiceId: e.target.value })} />
           <input className="input" placeholder="Sync API Token" value={state.cloud.syncApiToken ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, syncApiToken: e.target.value })} />
+          <input className="input" placeholder="Sync Model ID (任意)" value={state.cloud.syncModelId ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, syncModelId: e.target.value })} />
+          <select className="select" value={state.cloud.overlayProvider ?? 'auto'} onChange={(e) => patchState('cloud', { ...state.cloud, overlayProvider: e.target.value as 'auto' | 'cloud' | 'browser' })}>
+            <option value="auto">オーバーレイ合成: 自動</option>
+            <option value="cloud">オーバーレイ合成: クラウド優先</option>
+            <option value="browser">オーバーレイ合成: ブラウザCanvas</option>
+          </select>
+          <input className="input" placeholder="Overlay Provider API Key (任意)" value={state.cloud.overlayApiKey ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, overlayApiKey: e.target.value })} />
         </div>
-        <p className="mt-2 text-xs text-slate-600">※ APIキーはブラウザ内保存です。公開URLで使う場合は漏洩に注意してください（必要なら使い捨てキー推奨）。</p>
+        <p className="mt-2 text-xs text-slate-600">※ APIキーはブラウザ内保存です。公開URLで使う場合は漏洩に注意してください（使い捨てキー推奨）。</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
@@ -345,24 +394,41 @@ export default function Page() {
           <input type="file" accept="image/*" className="input" onChange={(e) => onUpload(e, 'avatar')} />
           {state.avatar && <img src={state.avatar.dataUrl} alt="avatar" className="h-28 w-28 rounded-lg object-cover" />}
           <button className="btn-secondary" onClick={createIdentityLock} disabled={!state.avatar}>IDロック作成（同意必須）</button>
-          {state.identityLock && (
-            <div className="rounded-lg bg-emerald-50 p-2 text-xs text-emerald-700">
-              LockID: {state.identityLock.identityId}<br />
-              人物: {state.identityLock.personName}
-            </div>
-          )}
 
-          <label className="label">商品画像</label>
+          <label className="label">背景画像</label>
+          <input type="file" accept="image/*" className="input" onChange={(e) => onUpload(e, 'backgroundImage')} />
+          <label className="label">手持ち商品画像（手で持つ商品）</label>
+          <input type="file" accept="image/*" className="input" onChange={(e) => onUpload(e, 'handheldProductImage')} />
+          <label className="label">スマホ画面画像</label>
+          <input type="file" accept="image/*" className="input" onChange={(e) => onUpload(e, 'smartphoneScreenImage')} />
+          <label className="label">商品画像（互換）</label>
           <input type="file" accept="image/*" className="input" onChange={(e) => onUpload(e, 'productImage')} />
           <label className="label">衣装リファレンス</label>
           <input type="file" accept="image/*" className="input" onChange={(e) => onUpload(e, 'outfitRef')} />
+          <label className="label">任意: 商品/スマホ保持ポーズ参考画像</label>
+          <input type="file" accept="image/*" className="input" onChange={(e) => onUpload(e, 'holdReferenceImage')} />
+
+          <div className="rounded-lg bg-slate-50 p-2 text-xs">
+            <div className="mb-1 font-semibold">コンポジション設定（%）</div>
+            <div className="grid grid-cols-2 gap-2">
+              <input className="input" type="number" step="1" value={Math.round(state.composition.handheldProduct.x * 100)} onChange={(e) => patchState('composition', { ...state.composition, handheldProduct: { ...state.composition.handheldProduct, x: Number(e.target.value) / 100 } })} placeholder="商品X" />
+              <input className="input" type="number" step="1" value={Math.round(state.composition.handheldProduct.y * 100)} onChange={(e) => patchState('composition', { ...state.composition, handheldProduct: { ...state.composition.handheldProduct, y: Number(e.target.value) / 100 } })} placeholder="商品Y" />
+              <input className="input" type="number" step="1" value={Math.round(state.composition.smartphoneScreen.x * 100)} onChange={(e) => patchState('composition', { ...state.composition, smartphoneScreen: { ...state.composition.smartphoneScreen, x: Number(e.target.value) / 100 } })} placeholder="スマホX" />
+              <input className="input" type="number" step="1" value={Math.round(state.composition.smartphoneScreen.y * 100)} onChange={(e) => patchState('composition', { ...state.composition, smartphoneScreen: { ...state.composition.smartphoneScreen, y: Number(e.target.value) / 100 } })} placeholder="スマホY" />
+            </div>
+          </div>
 
           <div className="flex flex-wrap gap-2 pt-2">
             <button className="btn" onClick={saveLocal}>ローカル保存</button>
-            <button className="btn-secondary" onClick={() => {
-              const loaded = loadFromLocalStorage();
-              setState(loaded ? normalizeProjectState(loaded) : initialState);
-            }}>ローカル読込</button>
+            <button
+              className="btn-secondary"
+              onClick={() => {
+                const loaded = loadFromLocalStorage();
+                setState(loaded ? normalizeProjectState(loaded) : initialState);
+              }}
+            >
+              ローカル読込
+            </button>
             <button className="btn-secondary" onClick={handleProjectExport}>JSON書き出し</button>
             <label className="btn-secondary cursor-pointer">
               JSON読み込み<input type="file" accept="application/json" className="hidden" onChange={handleProjectImport} />
@@ -393,7 +459,9 @@ export default function Page() {
           >
             <option value="">選択してください</option>
             {templates.map((tpl) => (
-              <option key={tpl.id} value={tpl.id}>{tpl.title} / {tpl.style}</option>
+              <option key={tpl.id} value={tpl.id}>
+                {tpl.title} / {tpl.style}
+              </option>
             ))}
           </select>
 
@@ -415,40 +483,30 @@ export default function Page() {
               <label className="label">Pause(ms)</label>
               <input type="number" className="input" value={state.voice.pauseMs} onChange={(e) => patchState('voice', { ...state.voice, pauseMs: Number(e.target.value) })} />
             </div>
-            <div>
-              <label className="label">Breath(0-100)</label>
-              <input type="number" className="input" value={state.voice.breathiness} onChange={(e) => patchState('voice', { ...state.voice, breathiness: Number(e.target.value) })} />
-            </div>
-            <div>
-              <label className="label">Prosody Rate</label>
-              <input type="number" step="0.1" className="input" value={state.voice.prosodyRate} onChange={(e) => patchState('voice', { ...state.voice, prosodyRate: Number(e.target.value) })} />
-            </div>
           </div>
           <button className="btn" onClick={speakPreview}>音声プレビュー（ElevenLabs優先）</button>
         </section>
 
         <section className="panel space-y-3">
-          <h2 className="text-lg font-bold">右: シーン・バッチ・生成</h2>
+          <h2 className="text-lg font-bold">右: シーン・バリエーション・生成</h2>
           <label className="label">シーンプリセット (100件)</label>
           <select className="select" value={state.selectedSceneId ?? ''} onChange={(e) => patchState('selectedSceneId', e.target.value)}>
             <option value="">選択してください</option>
             {scenes.map((scene) => (
-              <option key={scene.id} value={scene.id}>{scene.name} / {scene.lighting} / {scene.cameraMove}</option>
+              <option key={scene.id} value={scene.id}>
+                {scene.name} / {scene.lighting} / {scene.cameraMove}
+              </option>
             ))}
           </select>
 
-          {selectedScene && (
-            <div className="rounded-lg bg-slate-50 p-2 text-xs text-slate-600">
-              場所: {selectedScene.location} / 雰囲気: {selectedScene.mood} / 推奨秒数: {selectedScene.durationSec}
-            </div>
-          )}
+          {selectedScene && <div className="rounded-lg bg-slate-50 p-2 text-xs text-slate-600">場所: {selectedScene.location} / 雰囲気: {selectedScene.mood}</div>}
 
           <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
             <div>
               <label className="label">画角比率</label>
               <select className="select" value={state.aspectRatio} onChange={(e) => patchState('aspectRatio', e.target.value as AspectRatio)}>
-                <option value="9:16">9:16（縦動画 / TikTok向け）</option>
-                <option value="16:9">16:9（横動画 / YouTube向け）</option>
+                <option value="9:16">9:16（縦動画）</option>
+                <option value="16:9">16:9（横動画）</option>
               </select>
             </div>
             <div>
@@ -461,27 +519,55 @@ export default function Page() {
             </div>
           </div>
 
-          <button className="btn" onClick={startQueue} disabled={running}>生成キュー開始</button>
-          <p className="text-xs text-slate-500">出力解像度: {getVideoSize(state.aspectRatio).width}x{getVideoSize(state.aspectRatio).height}</p>
-          <p className="text-xs text-slate-500">※ 生成結果は公開せず、各動画をダウンロードして利用する前提です。</p>
+          <div className="rounded-lg bg-indigo-50 p-2 text-xs">
+            <div className="mb-1 font-semibold">同一人物マルチバリエーション</div>
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+              <select
+                className="select"
+                value={state.variation.preset}
+                onChange={(e) => {
+                  const preset = e.target.value as VariationPreset;
+                  patchState('variation', { ...state.variation, preset, ...variationPresetValues[preset] });
+                }}
+              >
+                <option value="stable">安定（変化小）</option>
+                <option value="balanced">標準</option>
+                <option value="explore">探索（変化大）</option>
+              </select>
+              <input className="input" type="number" value={state.variation.seed} onChange={(e) => patchState('variation', { ...state.variation, seed: Number(e.target.value) })} placeholder="シード" />
+              <button className="btn-secondary" onClick={() => patchState('variation', { ...state.variation, seed: Math.floor(Math.random() * 1_000_000_000) })}>シード再生成</button>
+            </div>
+            <p className="mt-1 text-[11px] text-slate-600">人物IDは固定、衣装/背景/シーンだけをseedで変化させます。</p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button className="btn" onClick={() => buildQueueItems(false)} disabled={running}>生成キュー開始</button>
+            <button className="btn-secondary" onClick={() => buildQueueItems(true)}>さらに追加生成（Append More）</button>
+          </div>
 
           <div className="space-y-2">
             {queue.map((item) => (
               <div key={item.id} className="rounded-lg border border-slate-200 p-2 text-xs">
-                <div className="mb-1 font-semibold">#{item.index} {item.status}</div>
+                <div className="mb-1 font-semibold">
+                  #{item.index} {item.status} / seed:{item.seed}
+                </div>
                 <div className="mb-1 h-2 rounded bg-slate-200">
                   <div className={`h-2 rounded ${item.status === 'failed' ? 'bg-red-500' : 'bg-indigo-500'}`} style={{ width: `${item.progress}%` }} />
                 </div>
-                <div className="mb-1 overflow-x-auto text-[10px] text-slate-600">{item.ffmpegCommand}</div>
                 {item.error && <div className="mb-1 text-[10px] text-red-600">{item.error}</div>}
                 {(item.status === 'done' || item.status === 'failed') && (
                   <div className="flex flex-wrap gap-2">
                     <button className="btn-secondary" onClick={() => downloadQueueRecipe(item)}>JSONレシピ</button>
-                    {item.videoUrl ? (
-                      <button className="btn-secondary" onClick={() => downloadFromUrl(item.videoUrl!, item.downloadName)}>生成MP4を開く</button>
-                    ) : (
-                      <button className="btn-secondary" onClick={() => downloadPlaceholderMp4(item)}>MP4プレースホルダ</button>
-                    )}
+                    <button
+                      className="btn-secondary"
+                      onClick={async () => {
+                        const artifact = await ensureArtifact(item);
+                        if (artifact.kind === 'url') downloadFromUrl(artifact.value, item.downloadName.replace('.webm', '.mp4'));
+                        else downloadFromUrl(artifact.value, item.downloadName);
+                      }}
+                    >
+                      出力をダウンロード
+                    </button>
                   </div>
                 )}
               </div>
@@ -493,7 +579,7 @@ export default function Page() {
       <section className="panel mt-4">
         <h2 className="mb-2 text-lg font-bold">プレビュー / ダウンロード</h2>
         <canvas ref={previewCanvasRef} className="w-full max-w-[720px] rounded-lg border border-slate-300 bg-slate-900" />
-        <p className="mt-2 text-xs text-slate-500">クライアントサイドCanvasでの疑似コンポジションプレビュー（最大60秒想定 / 9:16・16:9対応）</p>
+        <p className="mt-2 text-xs text-slate-500">Canvas合成プレビュー（同一人物のまま背景/商品/スマホ重ね合わせ）</p>
         <details className="mt-2 text-xs">
           <summary className="cursor-pointer font-semibold">リップシンク・タイムラインメタデータ</summary>
           <pre className="max-h-52 overflow-auto rounded bg-slate-900 p-2 text-emerald-300">{JSON.stringify(lipSyncTimeline, null, 2)}</pre>

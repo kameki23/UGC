@@ -12,13 +12,14 @@ export async function generateLipSyncVideoWithSync(
   audioBlob: Blob,
   language: Language,
   aspectRatio: AspectRatio,
+  modelId = 'lipsync-2',
 ): Promise<string> {
   const audioFile = new File([audioBlob], 'voice.mp3', { type: 'audio/mpeg' });
   const imageBlob = await (await fetch(inputImageDataUrl)).blob();
   const imageFile = new File([imageBlob], 'avatar.png', { type: 'image/png' });
 
   const form = new FormData();
-  form.append('model', 'lipsync-2');
+  form.append('model', modelId);
   form.append('input_image', imageFile);
   form.append('input_audio', audioFile);
   form.append('output_format', 'mp4');

@@ -23,20 +23,56 @@ export interface VoiceOptions {
   pitch: number;
 }
 
+export interface CompositionLayerSetting {
+  enabled: boolean;
+  x: number;
+  y: number;
+  scale: number;
+  rotation: number;
+  opacity: number;
+}
+
+export interface CompositionSettings {
+  personCutout: CompositionLayerSetting;
+  background: CompositionLayerSetting;
+  outfitRef: CompositionLayerSetting;
+  handheldProduct: CompositionLayerSetting;
+  smartphoneScreen: CompositionLayerSetting;
+  poseReferenceAssist: CompositionLayerSetting;
+  sceneBlendStrength: number;
+}
+
+export type VariationPreset = 'stable' | 'balanced' | 'explore';
+
+export interface VariationSettings {
+  preset: VariationPreset;
+  seed: number;
+  sceneJitter: number;
+  outfitJitter: number;
+  backgroundJitter: number;
+}
+
 export interface CloudSettings {
   mode: 'demo' | 'cloud';
   elevenLabsApiKey?: string;
   elevenLabsVoiceId?: string;
   syncApiToken?: string;
   syncModelId?: string;
+  overlayProvider?: 'auto' | 'cloud' | 'browser';
+  overlayApiKey?: string;
 }
 
 export interface ProjectState {
+  schemaVersion: number;
   projectName: string;
   language: Language;
   avatar?: UploadedAsset;
   productImage?: UploadedAsset;
   outfitRef?: UploadedAsset;
+  backgroundImage?: UploadedAsset;
+  handheldProductImage?: UploadedAsset;
+  smartphoneScreenImage?: UploadedAsset;
+  holdReferenceImage?: UploadedAsset;
   identityLock?: IdentityLock;
   selectedSceneId?: string;
   selectedTemplateId?: string;
@@ -46,6 +82,8 @@ export interface ProjectState {
   clipLengthSec: number;
   aspectRatio: AspectRatio;
   cloud: CloudSettings;
+  composition: CompositionSettings;
+  variation: VariationSettings;
 }
 
 export interface ScenePreset {
@@ -77,7 +115,11 @@ export interface QueueItem {
   ffmpegCommand: string;
   recipe: Record<string, unknown>;
   downloadName: string;
+  seed: number;
   audioUrl?: string;
   videoUrl?: string;
+  composedImageUrl?: string;
+  artifactUrl?: string;
+  artifactMime?: string;
   error?: string;
 }

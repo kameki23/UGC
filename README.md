@@ -1,40 +1,47 @@
 # UGC動画量産スタジオ
 
-静的エクスポート対応（Next.js 14 + TypeScript + Tailwind）のUGC動画企画/デモ生成アプリです。  
-**サーバ不要**・**GitHub Pages配信可能**な構成です。
+静的エクスポート対応（Next.js 14 + TypeScript + Tailwind）のUGC動画企画/生成アプリです。  
+**サーバ不要**・**GitHub Pages配信可能**な構成を維持しつつ、クラウド連携時は実生成も可能です。
 
 ## 重要な安全ポリシー
-
-- 本ツールの生成物は「GitHub上への自動公開」ではなく、利用者がローカルへダウンロードして使う運用です。
 
 - 本ツール出力は **AI生成コンテンツ** です（必ず開示してください）。
 - **なりすまし・誤認誘導・詐欺目的** の利用は禁止です。
 - 人物画像を使う場合は **本人の明示同意** が必要です。
-- このツールは **欺瞞的な impersonation（成り代わり）をサポートしません**。
+- このツールは **欺瞞的 impersonation（成り代わり）をサポートしません**。
+- 生成物は自動公開されません。利用者が各出力をダウンロードして運用してください。
 
-## 主な機能
+## 主な機能（最新）
 
 - 3カラムUI（左:素材 / 中央:台本・言語・音声 / 右:シーン・バッチ生成）
 - 常時表示の安全通知
+- 追加素材アップロード
+  - 人物画像
+  - 背景画像
+  - 手持ち商品画像
+  - スマホ画面画像
+  - 任意の保持ポーズ参考画像
+  - 既存互換の「商品画像」「衣装リファレンス」
+- コンポジション設定オブジェクト
+  - 人物/背景/衣装/商品/スマホ/参考画像の位置・スケール・回転・透明度
+- 同一人物マルチバリエーション生成
+  - variation preset（stable / balanced / explore）
+  - seed固定・再生成
+  - 人物IDは維持しつつ、背景/衣装/シーン側を揺らす設計
+- Append More（無限風の追記生成UX）
+  - 1回は1〜20本に制限
+  - ただしキュー連結で何度でも追加可能
+- クラウドプロバイダ抽象化
+  - ElevenLabs（TTS） + Sync（lip-sync動画）
+  - overlay synthesis を明示モジュール化
+  - APIキー未設定時はブラウザCanvasで現実的フォールバック合成
+- ダウンロード改善
+  - クラウド返却URLがある場合はそれを利用
+  - URL未返却時もローカルplaceholder動画（webm）を生成して必ずDL可能
 - プロジェクト保存/復元
-  - localStorage
+  - localStorage（v2）
   - JSONインポート/エクスポート
-- アバター/人物アップロード + Identity Lock（ブラウザ内SHA-256ベース）
-- 商品画像アップロード
-- 衣装リファレンスアップロード
-- シーンプリセット100件（`src/data/scene-presets.json`）
-- TikTok Shop風の日本語台本テンプレ50件（`src/data/script-templates.json`）
-- 言語切替（ja/en/ko/zh）
-- 音声スタイル・自然話法調整（pause/breath/prosody/pitch）
-- ブラウザ SpeechSynthesis フォールバック + Mock TTS Adapter 抽象化
-- リップシンク用デモタイムラインメタデータ表示
-- 1〜20本の生成キュー（進捗バー）
-- 出力画角比率の選択（9:16 / 16:9）とレイアウト追従プレビュー
-- デモモード（疑似生成）/ クラウド実生成モードの切替
-- ElevenLabs（TTS）+ Sync.so（リップシンク動画）連携
-- ffmpegコマンド「プレビュー文字列」生成（GitHub Pages上で実行はしない）
-- 生成動画は公開せずダウンロード利用（JSONレシピDL + 生成MP4リンク）
-- Canvas合成プレビュー（<=60秒想定）
+  - v1互換マイグレーション
 
 ## セットアップ
 
@@ -44,18 +51,30 @@ npm run generate:data
 npm run dev
 ```
 
-## クラウド実生成モードの使い方（Aプラン）
+## 新ワークフロー（推奨）
 
-1. 画面上部の「生成モード」を `クラウド（実生成）` に切替
-2. 以下を入力
-   - ElevenLabs API Key
-   - ElevenLabs Voice ID
-   - Sync API Token
-3. 人物画像をアップロード（同意済み素材のみ）
-4. 台本テキストを入力して「生成キュー開始」
-5. 完了後、各行の「生成MP4を開く」から動画を保存
+1. 左カラムで素材をアップロード
+   - 人物画像（同意済み）
+   - 背景、手持ち商品、スマホ画面
+   - 必要なら保持ポーズ参考
+2. 同意確認後、IDロック作成
+3. 中央で台本テンプレ選択・台本編集・音声確認
+4. 右でシーン、比率、バッチ本数、variation preset / seed を設定
+5. `生成キュー開始` で初回投入
+6. 追加で量産する場合は `さらに追加生成（Append More）`
+7. 各行の `出力をダウンロード` から取得
 
-> 注意: GitHub Pages上で使うためAPIキーはブラウザに保持されます。漏洩リスクを避けるため、権限を絞ったキーや使い捨てキーを推奨します。
+## クラウド実生成モード
+
+必要入力:
+
+- ElevenLabs API Key
+- ElevenLabs Voice ID
+- Sync API Token
+- （任意）Sync Model ID
+- （任意）Overlay Provider API Key
+
+> 注意: GitHub Pages上ではAPIキーがブラウザに保持されます。漏洩リスク回避のため権限を絞ったキー/使い捨てキー推奨。
 
 ## ビルド / エクスポート
 
@@ -66,14 +85,12 @@ npm run export
 
 `next.config.mjs` で `output: 'export'` を設定済みのため、静的ファイルを `out/` に出力します。
 
-## GitHub Pages 配備手順
+## 制約（現時点）
 
-1. リポジトリ作成してpush
-2. Actionsを使う場合は Next.js static export を Pages にデプロイ（`out/` を公開）
-3. もしくは `out/` を `gh-pages` ブランチへ配備
-4. Pages設定でブランチ/フォルダを指定
-
-> 注意: User/Project PagesのURLパスに応じて、必要なら `basePath` を `next.config.mjs` に追加してください。
+- ブラウザだけで本格的MP4エンコードは保証できないため、フォールバック動画は主にwebmで生成
+- overlay cloud provider は抽象化済みだが、現実装は mock-cloud + browser fallback
+- Sync側のモデル/レスポンス仕様変更時は `src/lib/cloud.ts` の調整が必要
+- 長尺・大量キュー時、ブラウザ負荷により処理時間が増える
 
 ## 商用利用の範囲と制約
 
@@ -83,14 +100,3 @@ npm run export
   - AI生成表記（必要な媒体で明示）
 - 第三者の顔/音声/ブランドを無断で模倣する使い方は禁止
 - 本アプリはデモ生成基盤であり、法的適合性の最終責任は利用者にあります
-
-## データ生成スクリプト
-
-```bash
-npm run generate:data
-```
-
-- `src/data/scene-presets.json`（100件）
-- `src/data/script-templates.json`（50件）
-
-を再生成します。
