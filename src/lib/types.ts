@@ -52,6 +52,8 @@ export interface VariationSettings {
   backgroundJitter: number;
 }
 
+export type RenderQualityLevel = 'fast' | 'balanced' | 'high';
+
 export interface CloudSettings {
   mode: 'demo' | 'cloud';
   elevenLabsApiKey?: string;
@@ -60,6 +62,9 @@ export interface CloudSettings {
   syncModelId?: string;
   overlayProvider?: 'auto' | 'cloud' | 'browser';
   overlayApiKey?: string;
+  productReplacementProvider?: 'auto' | 'api' | 'browser';
+  productReplacementApiKey?: string;
+  productReplacementApiUrl?: string;
 }
 
 export type GenerationMode = 'same_person_same_product' | 'same_person_product_swap' | 'person_swap_optional';
@@ -77,6 +82,16 @@ export interface GestureSegment {
 export interface GesturePlan {
   productType: string;
   segments: GestureSegment[];
+}
+
+export interface QualityGateScores {
+  blur: number;
+  boundary: number;
+  occlusion: number;
+  overall: number;
+  warnings: string[];
+  attempts: number;
+  passed: boolean;
 }
 
 export interface ProjectState {
@@ -104,6 +119,10 @@ export interface ProjectState {
   voice: VoiceOptions;
   batchCount: number;
   clipLengthSec: number;
+  autoDurationFromAudio?: boolean;
+  renderQualityLevel?: RenderQualityLevel;
+  maxQualityRetries?: number;
+  autoFixQuality?: boolean;
   aspectRatio: AspectRatio;
   cloud: CloudSettings;
   composition: CompositionSettings;
@@ -145,5 +164,7 @@ export interface QueueItem {
   composedImageUrl?: string;
   artifactUrl?: string;
   artifactMime?: string;
+  qualityGate?: QualityGateScores;
+  targetDurationSec?: number;
   error?: string;
 }

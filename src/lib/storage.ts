@@ -40,6 +40,9 @@ function parseRaw(raw: string): ProjectState | null {
         syncModelId: data.cloud?.syncModelId ?? '',
         overlayProvider: data.cloud?.overlayProvider ?? 'auto',
         overlayApiKey: data.cloud?.overlayApiKey ?? '',
+        productReplacementProvider: data.cloud?.productReplacementProvider ?? 'auto',
+        productReplacementApiKey: data.cloud?.productReplacementApiKey ?? '',
+        productReplacementApiUrl: data.cloud?.productReplacementApiUrl ?? '',
       },
       composition: {
         ...defaultComposition,
@@ -53,10 +56,14 @@ function parseRaw(raw: string): ProjectState | null {
       keepIdentityLocked: data.keepIdentityLocked ?? true,
       scriptVariationMode: data.scriptVariationMode ?? 'exact',
       scenarioCount: data.scenarioCount ?? 3,
+      autoDurationFromAudio: data.autoDurationFromAudio ?? true,
+      renderQualityLevel: data.renderQualityLevel ?? 'balanced',
+      maxQualityRetries: data.maxQualityRetries ?? 2,
+      autoFixQuality: data.autoFixQuality ?? true,
       productImages: data.productImages ?? (data.productImage ? [data.productImage] : []),
       avatarSwapImages: data.avatarSwapImages ?? [],
       handheldProductImage: data.handheldProductImage ?? data.productImage,
-      schemaVersion: schemaVersion >= 3 ? schemaVersion : 3,
+      schemaVersion: schemaVersion >= 4 ? schemaVersion : 4,
     } as ProjectState;
   } catch {
     return null;

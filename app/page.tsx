@@ -26,7 +26,7 @@ import {
 } from '@/lib/types';
 
 const initialState: ProjectState = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   projectName: '新規UGC案件',
   language: 'ja',
   script: 'ここに台本を編集してください。',
@@ -37,6 +37,10 @@ const initialState: ProjectState = {
   voice: { style: 'natural', pauseMs: 220, breathiness: 20, prosodyRate: 1, pitch: 1 },
   batchCount: 3,
   clipLengthSec: 15,
+  autoDurationFromAudio: true,
+  renderQualityLevel: 'balanced',
+  maxQualityRetries: 2,
+  autoFixQuality: true,
   aspectRatio: '9:16',
   cloud: {
     mode: 'demo',
@@ -46,6 +50,9 @@ const initialState: ProjectState = {
     syncModelId: 'lipsync-2',
     overlayProvider: 'auto',
     overlayApiKey: '',
+    productReplacementProvider: 'auto',
+    productReplacementApiKey: '',
+    productReplacementApiUrl: '',
   },
   composition: defaultComposition,
   variation: defaultVariation,
@@ -60,7 +67,7 @@ const getVideoSize = (aspectRatio: AspectRatio) => (aspectRatio === '16:9' ? { w
 const normalizeProjectState = (loaded: ProjectState): ProjectState => ({
   ...initialState,
   ...loaded,
-  schemaVersion: 3,
+  schemaVersion: 4,
   cloud: { ...initialState.cloud, ...(loaded.cloud ?? {}) },
   composition: { ...initialState.composition, ...(loaded.composition ?? {}) },
   variation: { ...initialState.variation, ...(loaded.variation ?? {}) },
@@ -71,6 +78,10 @@ const normalizeProjectState = (loaded: ProjectState): ProjectState => ({
   keepIdentityLocked: loaded.keepIdentityLocked ?? true,
   scriptVariationMode: loaded.scriptVariationMode ?? 'exact',
   scenarioCount: Math.min(20, Math.max(1, loaded.scenarioCount ?? 3)),
+  autoDurationFromAudio: loaded.autoDurationFromAudio ?? true,
+  renderQualityLevel: loaded.renderQualityLevel ?? 'balanced',
+  maxQualityRetries: loaded.maxQualityRetries ?? 2,
+  autoFixQuality: loaded.autoFixQuality ?? true,
 });
 
 async function fileToAsset(file: File): Promise<UploadedAsset> {
@@ -99,6 +110,28 @@ function downloadFromUrl(url: string, filename: string) {
   a.target = '_blank';
   a.rel = 'noopener noreferrer';
   a.click();
+}
+
+function estimateNaturalSpeechDurationSec(script: string, language: Language) {
+  const cpsMap: Record<Language, number> = { ja: 6.2, en: 13.5, ko: 7.8, zh: 7.5, fr: 12.3, it: 12.1 };
+  const cps = cpsMap[language] ?? 11;
+  const chars = script.replace(/\s+/g, '').length;
+  return Math.min(60, Math.max(5, Math.round((chars / cps) * 10) / 10));
+}
+
+async function getAudioDurationSec(audioBlob: Blob): Promise<number> {
+  const audio = document.createElement('audio');
+  const url = URL.createObjectURL(audioBlob);
+  audio.src = url;
+  try {
+    const duration = await new Promise<number>((resolve) => {
+      audio.onloadedmetadata = () => resolve(Number.isFinite(audio.duration) ? audio.duration : 0);
+      audio.onerror = () => resolve(0);
+    });
+    return Math.min(60, Math.max(1, duration || 0));
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }
 
 const variationPresetValues: Record<VariationPreset, Pick<ProjectState['variation'], 'sceneJitter' | 'outfitJitter' | 'backgroundJitter'>> = {
@@ -334,6 +367,7 @@ export default function Page() {
       const selectedAvatar = state.keepIdentityLocked ? state.avatar : swapAvatars.length ? swapAvatars[i % swapAvatars.length] : state.avatar;
       const productType = selectedProduct?.name?.toLowerCase().includes('app') ? 'app' : 'product';
       const scriptText = state.scriptVariationMode === 'exact' ? state.script : safeParaphrase(state.script, state.language, i);
+      const targetDurationSec = state.autoDurationFromAudio ? estimateNaturalSpeechDurationSec(scriptText, state.language) : Math.min(state.clipLengthSec, 60);
       const gesturePlan = getGesturePlan(scriptText, productType, state.language);
       const { width, height } = getVideoSize(state.aspectRatio);
 
@@ -357,6 +391,7 @@ export default function Page() {
         gesturePlan,
         resolution: `${width}x${height}`,
         lipSyncTimeline,
+        targetDurationSec,
       };
 
       return {
@@ -364,9 +399,10 @@ export default function Page() {
         index: idx,
         status: 'queued',
         progress: 0,
-        ffmpegCommand: `ffmpeg -loop 1 -i composed_${idx}.png -i voice_${idx}.mp3 -t ${Math.min(state.clipLengthSec, 60)} -vf "scale=${width}:${height}" -c:v libx264 output_${idx}.mp4`,
+        ffmpegCommand: `ffmpeg -loop 1 -i composed_${idx}.png -i voice_${idx}.mp3 -t ${targetDurationSec} -vf "scale=${width}:${height}" -c:v libx264 output_${idx}.mp4`,
         recipe,
         seed: itemSeed,
+        targetDurationSec,
         downloadName: `ugc_${state.aspectRatio.replace(':', 'x')}_${idx}.webm`,
       };
     });
@@ -410,18 +446,32 @@ export default function Page() {
         setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, status: 'rendering', progress: 8 } : q)));
         const { width, height } = getVideoSize(state.aspectRatio);
         const overlayProvider = createOverlayProvider(state);
-        const overlay = await overlayProvider.synthesize({ state, seed: item.seed, width, height });
-        setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, composedImageUrl: overlay.composedDataUrl, progress: 28 } : q)));
+
+        let chosenOverlay: Awaited<ReturnType<typeof overlayProvider.synthesize>> | null = null;
+        let qualityGate = null;
+        const maxAttempts = Math.max(0, state.maxQualityRetries ?? 2) + 1;
+        for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+          const overlay = await overlayProvider.synthesize({ state, seed: item.seed + attempt * 7, width, height });
+          const score = await measureImageQuality(overlay.composedDataUrl, state.renderQualityLevel ?? 'balanced', attempt);
+          chosenOverlay = overlay;
+          qualityGate = score;
+          if (score.passed || !state.autoFixQuality) break;
+        }
+
+        if (!chosenOverlay || !qualityGate) throw new Error('オーバーレイ生成に失敗しました');
+        setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, composedImageUrl: chosenOverlay.composedDataUrl, qualityGate, progress: 28 } : q)));
 
         const tts = createElevenLabsAdapter(state.cloud.elevenLabsApiKey, state.cloud.elevenLabsVoiceId);
         if (!tts.synthesize) throw new Error('TTS adapter synthesize未対応');
         const script = String((item.recipe as Record<string, unknown>).script ?? state.script);
         const audioBlob = await tts.synthesize(script.slice(0, 1200), state.voice, state.language);
         const audioUrl = URL.createObjectURL(audioBlob);
-        setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, progress: 56, audioUrl } : q)));
+        const measuredAudioDuration = await getAudioDurationSec(audioBlob);
+        const targetDurationSec = state.autoDurationFromAudio && measuredAudioDuration > 0 ? measuredAudioDuration : item.targetDurationSec ?? Math.min(state.clipLengthSec, 60);
+        setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, progress: 56, audioUrl, targetDurationSec } : q)));
 
-        const videoUrl = await generateLipSyncVideoWithSync(state.cloud.syncApiToken, overlay.composedDataUrl, audioBlob, state.language, state.aspectRatio, state.cloud.syncModelId || 'lipsync-2');
-        setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, status: 'done', progress: 100, videoUrl } : q)));
+        const videoUrl = await generateLipSyncVideoWithSync(state.cloud.syncApiToken, chosenOverlay.composedDataUrl, audioBlob, state.language, state.aspectRatio, state.cloud.syncModelId || 'lipsync-2');
+        setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, status: 'done', progress: 100, videoUrl, targetDurationSec } : q)));
       }
       setStatus('クラウド生成が完了しました。');
     } catch (error) {
@@ -461,10 +511,19 @@ export default function Page() {
       const fresh = queue.find((x) => x.id === current.id) ?? current;
       if (fresh.progress >= 72) {
         const { width, height } = getVideoSize(state.aspectRatio);
-        const overlay = await createOverlayProvider(state).synthesize({ state, seed: current.seed, width, height });
-        const artifact = await createPlaceholderVideoBlob(overlay.composedDataUrl, state.clipLengthSec);
+        const provider = createOverlayProvider(state);
+        let overlay = await provider.synthesize({ state, seed: current.seed, width, height });
+        let qualityGate = await measureImageQuality(overlay.composedDataUrl, state.renderQualityLevel ?? 'balanced', 1);
+        const maxAttempts = Math.max(0, state.maxQualityRetries ?? 2) + 1;
+        for (let attempt = 2; attempt <= maxAttempts && state.autoFixQuality && !qualityGate.passed; attempt += 1) {
+          overlay = await provider.synthesize({ state, seed: current.seed + attempt * 5, width, height });
+          qualityGate = await measureImageQuality(overlay.composedDataUrl, state.renderQualityLevel ?? 'balanced', attempt);
+        }
+
+        const targetDurationSec = current.targetDurationSec ?? (state.autoDurationFromAudio ? estimateNaturalSpeechDurationSec(String((current.recipe as Record<string, unknown>).script ?? state.script), state.language) : state.clipLengthSec);
+        const artifact = await createPlaceholderVideoBlob(overlay.composedDataUrl, targetDurationSec);
         const artifactUrl = URL.createObjectURL(artifact.blob);
-        setQueue((prev) => prev.map((x) => (x.id === current.id ? { ...x, status: 'done', progress: 100, composedImageUrl: overlay.composedDataUrl, artifactUrl, artifactMime: artifact.mimeType } : x)));
+        setQueue((prev) => prev.map((x) => (x.id === current.id ? { ...x, status: 'done', progress: 100, composedImageUrl: overlay.composedDataUrl, artifactUrl, artifactMime: artifact.mimeType, qualityGate, targetDurationSec } : x)));
       }
     }, 650);
     return () => clearInterval(timer);
@@ -541,6 +600,13 @@ export default function Page() {
           <input className="input" placeholder="ElevenLabs Voice ID" value={state.cloud.elevenLabsVoiceId ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, elevenLabsVoiceId: e.target.value })} />
           <input type="password" className="input" placeholder="Sync API Token" value={state.cloud.syncApiToken ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, syncApiToken: e.target.value })} />
           <input className="input" placeholder="Sync Model ID (任意)" value={state.cloud.syncModelId ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, syncModelId: e.target.value })} />
+          <select className="select" value={state.cloud.productReplacementProvider ?? 'auto'} onChange={(e) => patchState('cloud', { ...state.cloud, productReplacementProvider: e.target.value as 'auto' | 'api' | 'browser' })}>
+            <option value="auto">商品差し替えプロバイダ: auto</option>
+            <option value="api">商品差し替えプロバイダ: api</option>
+            <option value="browser">商品差し替えプロバイダ: browser fallback</option>
+          </select>
+          <input className="input" placeholder="Product Replacement API URL (任意)" value={state.cloud.productReplacementApiUrl ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, productReplacementApiUrl: e.target.value })} />
+          <input className="input" placeholder="Product Replacement API Key (任意)" value={state.cloud.productReplacementApiKey ?? ''} onChange={(e) => patchState('cloud', { ...state.cloud, productReplacementApiKey: e.target.value })} />
         </div>
       </div>
 
@@ -646,7 +712,21 @@ export default function Page() {
           <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
             <div><label className="label">画角比率</label><select className="select" value={state.aspectRatio} onChange={(e) => patchState('aspectRatio', e.target.value as AspectRatio)}><option value="9:16">9:16</option><option value="16:9">16:9</option></select></div>
             <div><label className="label">バッチ本数</label><input type="number" min={1} max={20} className="input" value={state.batchCount} onChange={(e) => patchState('batchCount', Number(e.target.value))} /></div>
-            <div><label className="label">1本の長さ</label><input type="number" min={5} max={60} className="input" value={state.clipLengthSec} onChange={(e) => patchState('clipLengthSec', Number(e.target.value))} /></div>
+            <div><label className="label">1本の長さ（手動）</label><input type="number" min={5} max={60} className="input" value={state.clipLengthSec} onChange={(e) => patchState('clipLengthSec', Number(e.target.value))} /></div>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs">
+            <div className="mb-2 font-semibold">品質 / 自動補正</div>
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+              <select className="select" value={state.renderQualityLevel ?? 'balanced'} onChange={(e) => patchState('renderQualityLevel', e.target.value as 'fast' | 'balanced' | 'high')}>
+                <option value="fast">Quality: fast</option>
+                <option value="balanced">Quality: balanced</option>
+                <option value="high">Quality: high</option>
+              </select>
+              <input type="number" min={0} max={6} className="input" value={state.maxQualityRetries ?? 2} onChange={(e) => patchState('maxQualityRetries', Math.max(0, Math.min(6, Number(e.target.value))))} placeholder="最大リトライ" />
+              <label className="inline-flex items-center gap-2 rounded bg-white px-3 py-2 text-xs font-semibold"><input type="checkbox" checked={state.autoFixQuality ?? true} onChange={(e) => patchState('autoFixQuality', e.target.checked)} /> 品質自動補正を有効</label>
+            </div>
+            <label className="mt-2 inline-flex items-center gap-2 rounded bg-white px-3 py-2 text-xs font-semibold"><input type="checkbox" checked={state.autoDurationFromAudio ?? true} onChange={(e) => patchState('autoDurationFromAudio', e.target.checked)} /> 音声長に合わせて動画尺を自動調整</label>
           </div>
 
           <label className="label">シナリオ本数（同一人物+同一商品モード用）</label>
@@ -674,6 +754,17 @@ export default function Page() {
               <div key={item.id} className="rounded-lg border border-slate-200 p-2 text-xs">
                 <div className="mb-1 font-semibold">#{item.index} {item.status} / seed:{item.seed}</div>
                 <div className="mb-1 h-2 rounded bg-slate-200"><div className={`h-2 rounded ${item.status === 'failed' ? 'bg-red-500' : 'bg-indigo-500'}`} style={{ width: `${item.progress}%` }} /></div>
+                {item.qualityGate && (
+                  <div className="mb-1 flex flex-wrap items-center gap-1 text-[11px]">
+                    <span className={`rounded px-2 py-0.5 font-semibold ${item.qualityGate.passed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>Q {Math.round(item.qualityGate.overall * 100)}</span>
+                    <span className="rounded bg-slate-100 px-2 py-0.5">blur {Math.round(item.qualityGate.blur * 100)}</span>
+                    <span className="rounded bg-slate-100 px-2 py-0.5">edge {Math.round(item.qualityGate.boundary * 100)}</span>
+                    <span className="rounded bg-slate-100 px-2 py-0.5">occ {Math.round(item.qualityGate.occlusion * 100)}</span>
+                    <span className="rounded bg-slate-100 px-2 py-0.5">retry {item.qualityGate.attempts - 1}</span>
+                    {!!item.qualityGate.warnings.length && <span className="rounded bg-rose-100 px-2 py-0.5 text-rose-700">⚠ {item.qualityGate.warnings.join(', ')}</span>}
+                  </div>
+                )}
+                {item.targetDurationSec && <div className="mb-1 text-[11px] text-slate-600">duration aligned: {item.targetDurationSec.toFixed(1)}s</div>}
                 {Boolean((item.recipe as Record<string, unknown>).gesturePlan) && <div className="mb-1 text-[11px] text-slate-600">gesture plan metadata included</div>}
                 {(item.status === 'done' || item.status === 'failed') && (
                   <div className="flex flex-wrap gap-2">

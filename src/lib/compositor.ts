@@ -10,12 +10,15 @@ export interface OverlaySynthesisInput {
 export interface OverlaySynthesisResult {
   composedDataUrl: string;
   provider: string;
+  meta?: Record<string, unknown>;
 }
 
 export interface OverlaySynthesisProvider {
   name: string;
   synthesize(input: OverlaySynthesisInput): Promise<OverlaySynthesisResult>;
 }
+
+export interface ProductReplacementProvider extends OverlaySynthesisProvider {}
 
 function seeded(seed: number) {
   let x = Math.sin(seed) * 10000;
@@ -55,7 +58,7 @@ function drawLayer(
   ctx.restore();
 }
 
-export class BrowserCanvasOverlayProvider implements OverlaySynthesisProvider {
+export class BrowserCanvasOverlayProvider implements ProductReplacementProvider {
   name = 'browser-canvas-fallback';
 
   async synthesize(input: OverlaySynthesisInput): Promise<OverlaySynthesisResult> {
@@ -109,7 +112,47 @@ export class BrowserCanvasOverlayProvider implements OverlaySynthesisProvider {
     ctx.font = '16px sans-serif';
     ctx.fillText(`seed=${input.seed} / ${input.state.aspectRatio}`, 22, input.height - 24);
 
-    return { composedDataUrl: canvas.toDataURL('image/png'), provider: this.name };
+    return { composedDataUrl: canvas.toDataURL('image/png'), provider: this.name, meta: { fallbackUsed: true } };
+  }
+}
+
+export class ApiProductReplacementProvider implements ProductReplacementProvider {
+  name = 'api-product-replacement-scaffold';
+
+  constructor(
+    private endpoint: string,
+    private apiKey: string,
+    private fallback: ProductReplacementProvider = new BrowserCanvasOverlayProvider(),
+  ) {}
+
+  async synthesize(input: OverlaySynthesisInput): Promise<OverlaySynthesisResult> {
+    try {
+      if (!this.endpoint || !this.apiKey) throw new Error('missing api credentials');
+      const res = await fetch(this.endpoint, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          seed: input.seed,
+          width: input.width,
+          height: input.height,
+          quality: input.state.renderQualityLevel ?? 'balanced',
+          project: {
+            avatar: input.state.avatar?.dataUrl,
+            product: (input.state.handheldProductImage ?? input.state.productImage)?.dataUrl,
+            background: input.state.backgroundImage?.dataUrl,
+          },
+        }),
+      });
+
+      if (!res.ok) throw new Error(`api failed: ${res.status}`);
+      const json = (await res.json()) as { composedDataUrl?: string; outputImage?: string; traceId?: string };
+      const composedDataUrl = json.composedDataUrl ?? json.outputImage;
+      if (!composedDataUrl) throw new Error('api response missing composed image');
+      return { composedDataUrl, provider: this.name, meta: { traceId: json.traceId ?? null } };
+    } catch (error) {
+      const fallback = await this.fallback.synthesize(input);
+      return { ...fallback, provider: `${this.name}→${fallback.provider}`, meta: { fallbackReason: error instanceof Error ? error.message : String(error) } };
+    }
   }
 }
 
@@ -125,6 +168,15 @@ export class MockCloudOverlayProvider implements OverlaySynthesisProvider {
 }
 
 export function createOverlayProvider(state: ProjectState): OverlaySynthesisProvider {
+  const wantsApi = state.cloud.productReplacementProvider === 'api' || (state.cloud.productReplacementProvider === 'auto' && Boolean(state.cloud.productReplacementApiKey));
+  if (wantsApi) {
+    return new ApiProductReplacementProvider(
+      state.cloud.productReplacementApiUrl || 'https://api.example.com/v1/product-replace',
+      state.cloud.productReplacementApiKey || '',
+      new BrowserCanvasOverlayProvider(),
+    );
+  }
+
   if (state.cloud.mode === 'cloud' && (state.cloud.overlayProvider === 'cloud' || (state.cloud.overlayProvider === 'auto' && state.cloud.overlayApiKey))) {
     return new MockCloudOverlayProvider();
   }
@@ -162,7 +214,7 @@ export async function createPlaceholderVideoBlob(imageDataUrl: string, lengthSec
     if (evt.data.size > 0) chunks.push(evt.data);
   };
 
-  const effective = Math.max(1.2, Math.min(lengthSec, 4));
+  const effective = Math.max(1.2, Math.min(lengthSec, 12));
   const interval = setInterval(draw, 1000 / 12);
   draw();
   recorder.start();
