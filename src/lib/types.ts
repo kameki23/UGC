@@ -1,4 +1,4 @@
-export type Language = 'ja' | 'en' | 'ko' | 'zh';
+export type Language = 'ja' | 'en' | 'ko' | 'zh' | 'fr' | 'it';
 export type AspectRatio = '9:16' | '16:9';
 
 export interface UploadedAsset {

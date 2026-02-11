@@ -1,3 +1,4 @@
+import { syncLanguageCodeMap } from './language';
 import { AspectRatio, Language } from './types';
 
 interface SyncCreateResponse {
@@ -23,7 +24,7 @@ export async function generateLipSyncVideoWithSync(
   form.append('input_image', imageFile);
   form.append('input_audio', audioFile);
   form.append('output_format', 'mp4');
-  form.append('language', language);
+  form.append('language', syncLanguageCodeMap[language] ?? 'en');
   form.append('aspect_ratio', aspectRatio);
 
   const createRes = await fetch('https://api.sync.so/v2/generate', {

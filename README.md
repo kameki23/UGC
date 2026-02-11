@@ -9,11 +9,13 @@
 - **なりすまし・誤認誘導・詐欺目的** の利用は禁止です。
 - 人物画像を使う場合は **本人の明示同意** が必要です。
 - このツールは **欺瞞的 impersonation（成り代わり）をサポートしません**。
+- 本ツールは「AIに検知されない」等の保証は行いません。目標は **高い自然さ（high naturalness）** です。
 - 生成物は自動公開されません。利用者が各出力をダウンロードして運用してください。
 
 ## 主な機能（最新）
 
 - 3カラムUI（左:素材 / 中央:台本・言語・音声 / 右:シーン・バッチ生成）
+- 言語対応: ja / en / ko / zh / fr / it
 - 常時表示の安全通知
 - 追加素材アップロード
   - 人物画像
@@ -28,13 +30,16 @@
   - variation preset（stable / balanced / explore）
   - seed固定・再生成
   - 人物IDは維持しつつ、背景/衣装/シーン側を揺らす設計
+- 台本テキストからの言語自動提案（ja/en/ko/zh/fr/it）+ ワンクリック適用
+- 画像トーン由来の音声スタイル提案（calm/energetic/luxury/natural）
+  - 明度・彩度・暖色比率のみを利用し、保護属性は推定しない
 - Append More（無限風の追記生成UX）
   - 1回は1〜20本に制限
   - ただしキュー連結で何度でも追加可能
 - クラウドプロバイダ抽象化
-  - ElevenLabs（TTS） + Sync（lip-sync動画）
+  - ElevenLabs（multilingual v2 / 言語マッピング対応TTS） + Sync（lip-sync動画）
   - overlay synthesis を明示モジュール化
-  - APIキー未設定時はブラウザCanvasで現実的フォールバック合成
+  - APIキー未設定時はブラウザSpeech Synthesis / Canvasでフォールバック
 - ダウンロード改善
   - クラウド返却URLがある場合はそれを利用
   - URL未返却時もローカルplaceholder動画（webm）を生成して必ずDL可能

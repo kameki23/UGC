@@ -1,7 +1,8 @@
+import { elevenLabsLanguageCodeMap, speechLangCodeMap } from './language';
 import { Language, VoiceOptions } from './types';
 
 export interface TTSAdapter {
-  speak(text: string, options: VoiceOptions): Promise<void>;
+  speak(text: string, options: VoiceOptions, language: Language): Promise<void>;
   synthesize?(text: string, options: VoiceOptions, language: Language): Promise<Blob>;
   name: string;
 }
@@ -9,12 +10,12 @@ export interface TTSAdapter {
 export class BrowserSpeechAdapter implements TTSAdapter {
   name = 'browser-speech-synthesis';
 
-  async speak(text: string, options: VoiceOptions): Promise<void> {
+  async speak(text: string, options: VoiceOptions, language: Language): Promise<void> {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = options.prosodyRate;
     utterance.pitch = options.pitch;
-    utterance.lang = 'ja-JP';
+    utterance.lang = speechLangCodeMap[language] ?? 'en-US';
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   }
@@ -25,14 +26,15 @@ export class ElevenLabsAdapter implements TTSAdapter {
 
   constructor(private apiKey: string, private voiceId: string) {}
 
-  async speak(text: string, options: VoiceOptions): Promise<void> {
-    const audio = await this.synthesize(text, options, 'ja');
+  async speak(text: string, options: VoiceOptions, language: Language): Promise<void> {
+    const audio = await this.synthesize(text, options, language);
     const url = URL.createObjectURL(audio);
     const player = new Audio(url);
     await player.play();
   }
 
   async synthesize(text: string, options: VoiceOptions, language: Language): Promise<Blob> {
+    const normalizedLanguage = elevenLabsLanguageCodeMap[language] ?? 'en';
     const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${this.voiceId}`, {
       method: 'POST',
       headers: {
@@ -49,7 +51,7 @@ export class ElevenLabsAdapter implements TTSAdapter {
           use_speaker_boost: true,
         },
         pronunciation_dictionary_locators: [],
-        language_code: language,
+        language_code: normalizedLanguage,
       }),
     });
 
@@ -63,8 +65,8 @@ export class ElevenLabsAdapter implements TTSAdapter {
 export class MockCloudTTSAdapter implements TTSAdapter {
   name = 'mock-cloud-tts';
 
-  async speak(text: string, options: VoiceOptions): Promise<void> {
-    console.info('Mock TTS request', { text, options });
+  async speak(text: string, options: VoiceOptions, language: Language): Promise<void> {
+    console.info('Mock TTS request', { text, options, language });
     await new Promise((resolve) => setTimeout(resolve, 400));
   }
 
@@ -80,6 +82,7 @@ export function createTTSAdapter(preferCloud = false): TTSAdapter {
 }
 
 export function createElevenLabsAdapter(apiKey?: string, voiceId?: string): TTSAdapter {
-  if (!apiKey || !voiceId) return new MockCloudTTSAdapter();
-  return new ElevenLabsAdapter(apiKey, voiceId);
+  if (apiKey && voiceId) return new ElevenLabsAdapter(apiKey, voiceId);
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) return new BrowserSpeechAdapter();
+  return new MockCloudTTSAdapter();
 }

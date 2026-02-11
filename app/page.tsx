@@ -7,6 +7,8 @@ import { generateLipSyncVideoWithSync } from '@/lib/cloud';
 import { createOverlayProvider, createPlaceholderVideoBlob } from '@/lib/compositor';
 import { createDeterministicIdentityId } from '@/lib/identity';
 import { createProjectExportBlob, defaultComposition, defaultVariation, loadFromLocalStorage, saveToLocalStorage } from '@/lib/storage';
+import { detectLanguageFromScript, languageLabels, speechLangCodeMap } from '@/lib/language';
+import { suggestVoiceStyleFromImage } from '@/lib/style-suggestion';
 import { createElevenLabsAdapter } from '@/lib/tts';
 import { AspectRatio, Language, ProjectState, QueueItem, ScenePreset, ScriptTemplate, UploadedAsset, VariationPreset } from '@/lib/types';
 
@@ -86,6 +88,8 @@ export default function Page() {
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [running, setRunning] = useState(false);
   const [status, setStatus] = useState('準備完了');
+  const [languageSuggestion, setLanguageSuggestion] = useState<ReturnType<typeof detectLanguageFromScript> | null>(null);
+  const [voiceStyleSuggestion, setVoiceStyleSuggestion] = useState<Awaited<ReturnType<typeof suggestVoiceStyleFromImage>> | null>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -96,14 +100,27 @@ export default function Page() {
   const selectedScene = scenes.find((s) => s.id === state.selectedSceneId);
   const selectedTemplate = templates.find((t) => t.id === state.selectedTemplateId);
 
+  useEffect(() => {
+    setLanguageSuggestion(detectLanguageFromScript(state.script));
+  }, [state.script]);
+
   const lipSyncTimeline = useMemo(() => {
     const length = Math.min(state.clipLengthSec, 60);
+    const phonemeMap: Record<Language, string[]> = {
+      ja: ['a', 'i', 'u', 'e', 'o'],
+      en: ['ae', 'ih', 'uh', 'eh', 'ow'],
+      ko: ['a', 'eo', 'u', 'i', 'eu'],
+      zh: ['a', 'i', 'u', 'e', 'o'],
+      fr: ['a', 'e', 'i', 'o', 'u'],
+      it: ['a', 'e', 'i', 'o', 'u'],
+    };
+    const phonemes = phonemeMap[state.language] ?? phonemeMap.en;
     return Array.from({ length: Math.ceil(length / 2) }, (_, i) => ({
       t: i * 2,
       mouthOpen: Number((Math.sin(i) * 0.4 + 0.5).toFixed(2)),
-      phoneme: ['a', 'i', 'u', 'e', 'o'][i % 5],
+      phoneme: phonemes[i % phonemes.length],
     }));
-  }, [state.clipLengthSec]);
+  }, [state.clipLengthSec, state.language]);
 
   useEffect(() => {
     if (!previewCanvasRef.current) return;
@@ -161,6 +178,11 @@ export default function Page() {
     if (!file) return;
     const asset = await fileToAsset(file);
     patchState(key, asset);
+
+    if (key === 'avatar') {
+      const suggested = await suggestVoiceStyleFromImage(asset.dataUrl);
+      setVoiceStyleSuggestion(suggested);
+    }
   };
 
   const createIdentityLock = async () => {
@@ -345,7 +367,7 @@ export default function Page() {
 
   const speakPreview = async () => {
     const tts = createElevenLabsAdapter(state.cloud.elevenLabsApiKey, state.cloud.elevenLabsVoiceId);
-    await tts.speak(state.script.slice(0, 120), state.voice);
+    await tts.speak(state.script.slice(0, 120), state.voice, state.language);
     setStatus(`音声プレビュー再生: ${tts.name}`);
   };
 
@@ -357,7 +379,7 @@ export default function Page() {
   return (
     <main className="mx-auto max-w-[1800px] p-4">
       <div className="sticky top-0 z-20 mb-4 rounded-xl border-2 border-red-400 bg-red-50 p-3 text-sm font-semibold text-red-700">
-        安全通知: このツールの出力はAI生成コンテンツです。本人同意のない人物利用は禁止。なりすまし・誤認を狙う用途は禁止。商用利用時も広告/配信先ポリシーと法令に従ってください。
+        安全通知: このツールの出力はAI生成コンテンツです。本人同意のない人物利用は禁止。なりすまし・誤認を狙う用途は禁止。商用では「高い自然さ」を目指しますが、欺瞞的な表現や誤解誘導は行わず、各媒体ポリシーと法令に従ってください。
       </div>
 
       <h1 className="mb-4 text-2xl font-bold">UGC動画量産スタジオ</h1>
@@ -394,6 +416,14 @@ export default function Page() {
           <input type="file" accept="image/*" className="input" onChange={(e) => onUpload(e, 'avatar')} />
           {state.avatar && <img src={state.avatar.dataUrl} alt="avatar" className="h-28 w-28 rounded-lg object-cover" />}
           <button className="btn-secondary" onClick={createIdentityLock} disabled={!state.avatar}>IDロック作成（同意必須）</button>
+          {voiceStyleSuggestion && (
+            <div className="rounded-lg bg-slate-50 p-2 text-xs">
+              <div className="font-semibold">画像トーンから音声スタイル提案（属性推定なし）</div>
+              <div>提案: {voiceStyleSuggestion.style} / {voiceStyleSuggestion.reason}</div>
+              <div className="text-slate-500">brightness:{voiceStyleSuggestion.metrics.brightness} saturation:{voiceStyleSuggestion.metrics.saturation} warm:{voiceStyleSuggestion.metrics.warmRatio}</div>
+              <button className="btn-secondary mt-2" onClick={() => patchState('voice', { ...state.voice, style: voiceStyleSuggestion.style })}>提案スタイルを適用</button>
+            </div>
+          )}
 
           <label className="label">背景画像</label>
           <input type="file" accept="image/*" className="input" onChange={(e) => onUpload(e, 'backgroundImage')} />
@@ -444,7 +474,16 @@ export default function Page() {
             <option value="en">English (en)</option>
             <option value="ko">한국어 (ko)</option>
             <option value="zh">中文 (zh)</option>
+            <option value="fr">Français (fr)</option>
+            <option value="it">Italiano (it)</option>
           </select>
+          {languageSuggestion && (
+            <div className="rounded-lg bg-slate-50 p-2 text-xs">
+              <div>自動提案: {languageLabels[languageSuggestion.language]} ({languageSuggestion.language}) / 信頼度 {Math.round(languageSuggestion.confidence * 100)}%</div>
+              <div className="text-slate-500">根拠: {languageSuggestion.reason}</div>
+              <button className="btn-secondary mt-2" onClick={() => patchState('language', languageSuggestion.language)}>提案言語を適用</button>
+            </div>
+          )}
 
           <label className="label">台本テンプレート (50件)</label>
           <select
@@ -485,6 +524,7 @@ export default function Page() {
             </div>
           </div>
           <button className="btn" onClick={speakPreview}>音声プレビュー（ElevenLabs優先）</button>
+          <p className="text-xs text-slate-500">TTS言語コード: {speechLangCodeMap[state.language]}（ElevenLabs未設定時はブラウザ音声にフォールバック）</p>
         </section>
 
         <section className="panel space-y-3">
